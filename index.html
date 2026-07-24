@@ -285,6 +285,16 @@
   .contact-card a{color:#e9c988; font-weight:800; border-bottom:1px solid transparent; transition:border-color .2s ease;}
   .contact-card a:hover{border-color:#e9c988;}
   .contact-card .icon{margin-right:0.5rem;}
+  .contact-actions{display:flex; gap:0.8rem; margin-top:1.4rem; flex-wrap:wrap;}
+  .contact-actions a{
+    display:inline-flex; align-items:center; gap:0.5rem;
+    padding:0.6rem 1.15rem; border-radius:30px; font-size:0.85rem; font-weight:800;
+    border:1px solid rgba(255,255,255,0.25); color:#fff;
+    transition:background .25s ease, transform .25s ease, border-color .25s ease;
+  }
+  .contact-actions a:hover{transform:translateY(-2px);}
+  .contact-actions a.whatsapp:hover{border-color:#25D366; background:rgba(37,211,102,0.15);}
+  .contact-actions a.call:hover{border-color:var(--gold); background:rgba(184,134,63,0.18);}
 
   footer{
     text-align:center; padding:2.2rem 1.5rem; background:var(--bark);
@@ -464,15 +474,24 @@
     <div class="contact-grid reveal-stagger">
       <div class="contact-card">
         <h3>Gwunderstübli – Studio</h3>
+        <p><span class="icon">👤</span>Arma Schmid</p>
         <p><span class="icon">📍</span>Rawilstrasse 27, 3775 Lenk</p>
-        <p><span class="icon">☎</span>033 733 12 10 / 079 428 21 44</p>
+        <p><span class="icon">☎</span>079 428 21 44</p>
         <p><span class="icon">✉</span><a href="mailto:armaschmid@bluewin.ch">armaschmid@bluewin.ch</a></p>
+        <div class="contact-actions">
+          <a href="https://wa.me/41794282144" class="whatsapp" target="_blank" rel="noopener">💬 WhatsApp</a>
+          <a href="tel:+41794282144" class="call">📞 Anrufen</a>
+        </div>
       </div>
       <div class="contact-card">
         <h3>Gwunderstube – Inneneinrichtung</h3>
+        <p><span class="icon">👤</span>Kuschi Schmid</p>
         <p><span class="icon">📍</span>Oberriedstrasse 7, 3775 Lenk</p>
         <p><span class="icon">☎</span>079 523 35 45</p>
-        <p><span class="icon">✉</span><a href="mailto:armaschmid@bluewin.ch">armaschmid@bluewin.ch</a></p>
+        <div class="contact-actions">
+          <a href="https://wa.me/41795233545" class="whatsapp" target="_blank" rel="noopener">💬 WhatsApp</a>
+          <a href="tel:+41795233545" class="call">📞 Anrufen</a>
+        </div>
       </div>
     </div>
   </div>
