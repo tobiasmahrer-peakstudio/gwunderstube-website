@@ -24,11 +24,14 @@
 
   .card{background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:2rem;}
   label{display:block; font-weight:700; font-size:0.85rem; margin-bottom:0.4rem; color:var(--walnut-2);}
-  input[type="password"], input[type="date"]{
+  input[type="password"], input[type="text"], select{
     width:100%; padding:0.75rem 1rem; border-radius:10px; border:1px solid var(--cream-2);
     background:var(--cream); font-size:1rem; font-family:inherit; color:var(--text);
   }
-  input:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  input:focus, select:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  .date-fields{display:grid; grid-template-columns:70px 1fr 90px; gap:0.5rem;}
+  select{min-width:0;}
+  .hint{font-size:0.8rem; color:var(--walnut-2); margin-top:0.3rem;}
   .btn{
     display:inline-block; padding:0.8rem 1.6rem; border-radius:30px; border:none; cursor:pointer;
     font-weight:800; font-size:0.95rem; font-family:inherit;
@@ -54,16 +57,35 @@
     padding:0.7rem 0; border-bottom:1px solid var(--cream-2); font-size:0.95rem;
   }
   .range-list li:last-child{border-bottom:none;}
+  .range-info{display:flex; flex-direction:column; gap:0.15rem;}
+  .range-name{font-size:0.82rem; color:var(--moss-dark); font-weight:700;}
 
-  .add-row{display:grid; grid-template-columns:1fr 1fr auto; gap:0.8rem; align-items:end; margin-top:1.5rem;}
+  .add-row{display:flex; flex-direction:column; gap:1.2rem; margin-top:1.5rem;}
   .actions-row{display:flex; gap:1rem; margin-top:2rem; align-items:center; flex-wrap:wrap;}
   .logout{font-size:0.85rem; color:var(--walnut-2); text-decoration:underline; cursor:pointer; background:none; border:none; font-family:inherit; margin-left:auto;}
 
   .kicker{text-transform:uppercase; letter-spacing:2px; font-size:0.75rem; font-weight:800; color:var(--moss-dark); display:block; margin-bottom:0.6rem;}
 
-  @media (max-width:520px){
-    .add-row{grid-template-columns:1fr; }
-  }
+  .cal-toggle{background:none; border:1px solid var(--cream-2); color:var(--walnut-2); border-radius:20px; padding:0.5rem 1rem; font-size:0.85rem; font-weight:700; cursor:pointer; font-family:inherit;}
+  .cal-toggle:hover{background:var(--cream-2);}
+  .cal-panel{display:none; margin-top:1rem; border:1px solid var(--cream-2); border-radius:12px; padding:1.2rem;}
+  .cal-panel.open{display:block;}
+  .cal-panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:0.9rem;}
+  .cal-panel-head button{width:32px; height:32px; border-radius:50%; border:1px solid var(--cream-2); background:#fff; cursor:pointer; font-size:1rem;}
+  .cal-panel-head button:hover{background:var(--cream-2);}
+  .cal-panel-label{font-weight:800; font-family:'Playfair Display', serif;}
+  .cal-panel-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:0.3rem;}
+  .cal-panel-grid .dow{font-size:0.68rem; font-weight:800; text-align:center; color:var(--walnut-2); padding-bottom:0.3rem;}
+  .cday{aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:0.82rem; cursor:pointer; user-select:none;}
+  .cday.empty{visibility:hidden; cursor:default;}
+  .cday.free:hover{background:var(--cream-2);}
+  .cday.booked{background:#f5e0d6; color:#a34a35; cursor:not-allowed;}
+  .cday.picked-start, .cday.picked-end{background:var(--gold); color:#fff; font-weight:800;}
+  .cday.in-range{background:#eef1e9; color:var(--moss-dark);}
+  .cal-legend{display:flex; gap:1.2rem; margin-top:0.9rem; font-size:0.78rem; color:var(--walnut-2);}
+  .cal-legend span{display:inline-flex; align-items:center; gap:0.4rem;}
+  .cdot{width:10px; height:10px; border-radius:50%; display:inline-block;}
+  .cdot.booked{background:#c1543f;} .cdot.picked{background:var(--gold);}
 </style>
 </head>
 <body>
@@ -88,7 +110,7 @@
   <div id="adminView">
     <span class="kicker">Admin-Bereich</span>
     <h1>Belegung verwalten</h1>
-    <p style="color:var(--walnut-2);">Hier siehst du alle aktuell belegten Zeiträume fürs Gwunderstübli. Änderungen werden erst live, wenn du unten auf „Speichern" klickst.</p>
+    <p style="color:var(--walnut-2);">Hier siehst du alle aktuell belegten Zeiträume fürs Gwunderstübli. Namen sind nur hier sichtbar, nie auf der Website. Änderungen werden erst live, wenn du unten auf „Speichern" klickst.</p>
 
     <div class="card">
       <h3>Aktuelle Zeiträume</h3>
@@ -96,13 +118,43 @@
 
       <div class="add-row">
         <div>
-          <label for="newStart">Von</label>
-          <input type="date" id="newStart">
+          <label>Von</label>
+          <div class="date-fields">
+            <select id="startDay"></select>
+            <select id="startMonth"></select>
+            <select id="startYear"></select>
+          </div>
         </div>
         <div>
-          <label for="newEnd">Bis</label>
-          <input type="date" id="newEnd">
+          <label>Bis</label>
+          <div class="date-fields">
+            <select id="endDay"></select>
+            <select id="endMonth"></select>
+            <select id="endYear"></select>
+          </div>
         </div>
+        <div>
+          <label for="newName">Name (nur intern sichtbar)</label>
+          <input type="text" id="newName" placeholder="z.B. Familie Muster">
+        </div>
+
+        <div>
+          <button type="button" class="cal-toggle" id="calToggle">📅 Kalender öffnen</button>
+          <div class="cal-panel" id="calPanel">
+            <div class="cal-panel-head">
+              <button type="button" id="cPrev">‹</button>
+              <span class="cal-panel-label" id="cLabel"></span>
+              <button type="button" id="cNext">›</button>
+            </div>
+            <div class="cal-panel-grid" id="cGrid"></div>
+            <div class="cal-legend">
+              <span><span class="cdot booked"></span>Bereits belegt</span>
+              <span><span class="cdot picked"></span>Ausgewählt</span>
+            </div>
+            <p class="hint" id="cHint">Ersten Tag anklicken (Von), dann letzten Tag (Bis).</p>
+          </div>
+        </div>
+
         <button class="btn btn-secondary" id="addBtn">+ Hinzufügen</button>
       </div>
 
@@ -129,8 +181,62 @@
   const saveBtn = document.getElementById('saveBtn');
   const logoutBtn = document.getElementById('logoutBtn');
   const statusEl = document.getElementById('status');
-  const newStart = document.getElementById('newStart');
-  const newEnd = document.getElementById('newEnd');
+  const newName = document.getElementById('newName');
+  const startDay = document.getElementById('startDay');
+  const startMonth = document.getElementById('startMonth');
+  const startYear = document.getElementById('startYear');
+  const endDay = document.getElementById('endDay');
+  const endMonth = document.getElementById('endMonth');
+  const endYear = document.getElementById('endYear');
+
+  const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  function fillDateSelects(daySel, monthSel, yearSel) {
+    daySel.innerHTML = '';
+    for (let d = 1; d <= 31; d++) {
+      const opt = document.createElement('option');
+      opt.value = String(d).padStart(2, '0');
+      opt.textContent = d;
+      daySel.appendChild(opt);
+    }
+    monthSel.innerHTML = '';
+    MONTHS.forEach((name, i) => {
+      const opt = document.createElement('option');
+      opt.value = String(i + 1).padStart(2, '0');
+      opt.textContent = name;
+      monthSel.appendChild(opt);
+    });
+    yearSel.innerHTML = '';
+    const thisYear = new Date().getFullYear();
+    for (let y = thisYear; y <= thisYear + 3; y++) {
+      const opt = document.createElement('option');
+      opt.value = String(y);
+      opt.textContent = y;
+      yearSel.appendChild(opt);
+    }
+  }
+  fillDateSelects(startDay, startMonth, startYear);
+  fillDateSelects(endDay, endMonth, endYear);
+
+  function selectsToDateStr(daySel, monthSel, yearSel) {
+    return `${yearSel.value}-${monthSel.value}-${daySel.value}`;
+  }
+
+  function setSelects(daySel, monthSel, yearSel, dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    yearSel.value = y; monthSel.value = m; daySel.value = d;
+  }
+
+  function isValidDate(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+  }
+
+  function formatDateDisplay(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}.${m}.${y}`;
+  }
 
   let ranges = [];
   let password = sessionStorage.getItem('gw_admin_pw') || '';
@@ -146,16 +252,26 @@
     const sorted = [...ranges].sort((a, b) => a.start.localeCompare(b.start));
     sorted.forEach((r) => {
       const li = document.createElement('li');
+      const info = document.createElement('div');
+      info.className = 'range-info';
       const label = document.createElement('span');
-      label.textContent = `${r.start} → ${r.end}`;
+      label.textContent = `${formatDateDisplay(r.start)} → ${formatDateDisplay(r.end)}`;
+      info.appendChild(label);
+      if (r.name) {
+        const nameEl = document.createElement('span');
+        nameEl.className = 'range-name';
+        nameEl.textContent = '👤 ' + r.name;
+        info.appendChild(nameEl);
+      }
       const delBtn = document.createElement('button');
       delBtn.className = 'btn btn-danger';
       delBtn.textContent = 'Entfernen';
       delBtn.addEventListener('click', () => {
-        ranges = ranges.filter((x) => !(x.start === r.start && x.end === r.end));
+        ranges = ranges.filter((x) => x !== r);
         renderList();
+        renderCal();
       });
-      li.appendChild(label);
+      li.appendChild(info);
       li.appendChild(delBtn);
       rangeList.appendChild(li);
     });
@@ -167,9 +283,12 @@
   }
 
   async function loadRanges() {
-    const res = await fetch(API + '/api/bookings');
+    const res = await fetch(API + '/api/bookings/full', {
+      headers: { 'Authorization': 'Bearer ' + password },
+    });
     ranges = await res.json();
     renderList();
+    renderCal();
   }
 
   async function login() {
@@ -203,18 +322,22 @@
   pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
 
   addBtn.addEventListener('click', () => {
-    if (!newStart.value || !newEnd.value) {
-      showStatus('Bitte Start- und Enddatum wählen.', false);
+    const start = selectsToDateStr(startDay, startMonth, startYear);
+    const end = selectsToDateStr(endDay, endMonth, endYear);
+
+    if (!isValidDate(start) || !isValidDate(end)) {
+      showStatus('Ungültiges Datum (z.B. gibt es keinen 30. Februar).', false);
       return;
     }
-    if (newStart.value > newEnd.value) {
+    if (start > end) {
       showStatus('Das Startdatum muss vor dem Enddatum liegen.', false);
       return;
     }
-    ranges.push({ start: newStart.value, end: newEnd.value });
-    newStart.value = '';
-    newEnd.value = '';
+    ranges.push({ start, end, name: newName.value.trim() });
+    newName.value = '';
+    pickStart = null; pickEnd = null;
     renderList();
+    renderCal();
     statusEl.style.display = 'none';
   });
 
@@ -251,6 +374,92 @@
     adminView.style.display = 'block';
     loadRanges();
   }
+
+  // --- Kalender-Picker ---
+  const calToggle = document.getElementById('calToggle');
+  const calPanel = document.getElementById('calPanel');
+  const cPrev = document.getElementById('cPrev');
+  const cNext = document.getElementById('cNext');
+  const cLabel = document.getElementById('cLabel');
+  const cGrid = document.getElementById('cGrid');
+  const cHint = document.getElementById('cHint');
+
+  const today = new Date();
+  let cYear = today.getFullYear();
+  let cMonth = today.getMonth();
+  let pickStart = null;
+  let pickEnd = null;
+
+  calToggle.addEventListener('click', () => {
+    calPanel.classList.toggle('open');
+  });
+
+  function isBookedDate(dateStr) {
+    return ranges.some(r => dateStr >= r.start && dateStr <= r.end);
+  }
+
+  function renderCal() {
+    cLabel.textContent = MONTHS[cMonth] + ' ' + cYear;
+    cGrid.innerHTML = '';
+    ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'dow';
+      el.textContent = d;
+      cGrid.appendChild(el);
+    });
+
+    const firstWeekday = (new Date(cYear, cMonth, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(cYear, cMonth + 1, 0).getDate();
+
+    for (let i = 0; i < firstWeekday; i++) {
+      const el = document.createElement('div');
+      el.className = 'cday empty';
+      cGrid.appendChild(el);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${cYear}-${String(cMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const el = document.createElement('div');
+      el.textContent = d;
+      const booked = isBookedDate(dateStr);
+      let cls = 'cday ' + (booked ? 'booked' : 'free');
+      if (pickStart && dateStr === pickStart) cls += ' picked-start';
+      if (pickEnd && dateStr === pickEnd) cls += ' picked-end';
+      if (pickStart && pickEnd && dateStr > pickStart && dateStr < pickEnd) cls += ' in-range';
+      el.className = cls;
+      if (!booked) {
+        el.addEventListener('click', () => onDayClick(dateStr));
+      }
+      cGrid.appendChild(el);
+    }
+  }
+
+  function onDayClick(dateStr) {
+    if (!pickStart || (pickStart && pickEnd)) {
+      pickStart = dateStr;
+      pickEnd = null;
+      cHint.textContent = 'Jetzt letzten Tag anklicken (Bis).';
+    } else if (dateStr < pickStart) {
+      pickStart = dateStr;
+      cHint.textContent = 'Jetzt letzten Tag anklicken (Bis).';
+    } else {
+      pickEnd = dateStr;
+      setSelects(startDay, startMonth, startYear, pickStart);
+      setSelects(endDay, endMonth, endYear, pickEnd);
+      cHint.textContent = `Ausgewählt: ${formatDateDisplay(pickStart)} – ${formatDateDisplay(pickEnd)}. Unten „+ Hinzufügen" klicken.`;
+    }
+    renderCal();
+  }
+
+  cPrev.addEventListener('click', () => {
+    cMonth--; if (cMonth < 0) { cMonth = 11; cYear--; }
+    renderCal();
+  });
+  cNext.addEventListener('click', () => {
+    cMonth++; if (cMonth > 11) { cMonth = 0; cYear++; }
+    renderCal();
+  });
+
+  renderCal();
 </script>
 
 </body>
