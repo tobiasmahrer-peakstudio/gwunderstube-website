@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Belegung verwalten – Gwunderstübli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#f6f1e7; --cream-2:#efe6d4; --walnut:#3d2b20; --walnut-2:#5a4230;
+    --bark:#2c1f17; --moss:#5b6f4f; --moss-dark:#465a3a; --gold:#b8863f; --gold-light:#e3b968;
+    --text:#3a2f26; --radius:16px; --shadow:0 10px 30px rgba(44,31,23,0.15);
+    --ease: cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Nunito Sans', sans-serif; color:var(--text); background:var(--cream); line-height:1.6;}
+  h1,h2,h3{font-family:'Playfair Display', serif; color:var(--bark); line-height:1.2; margin:0 0 0.4rem;}
+  .brand{font-family:'Poppins', sans-serif; font-weight:600; font-size:1.1rem; padding:1.2rem 1.5rem; border-bottom:1px solid rgba(61,43,32,0.08);}
+  .brand span{color:var(--moss);}
+  .wrap{max-width:640px; margin:0 auto; padding:3rem 1.5rem;}
+
+  .card{background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:2rem;}
+  label{display:block; font-weight:700; font-size:0.85rem; margin-bottom:0.4rem; color:var(--walnut-2);}
+  input[type="password"], input[type="date"]{
+    width:100%; padding:0.75rem 1rem; border-radius:10px; border:1px solid var(--cream-2);
+    background:var(--cream); font-size:1rem; font-family:inherit; color:var(--text);
+  }
+  input:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  .btn{
+    display:inline-block; padding:0.8rem 1.6rem; border-radius:30px; border:none; cursor:pointer;
+    font-weight:800; font-size:0.95rem; font-family:inherit;
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease);
+  }
+  .btn-primary{background:linear-gradient(135deg, var(--gold-light), var(--gold)); color:#2c1f17;}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(184,134,63,0.4);}
+  .btn-secondary{background:var(--cream-2); color:var(--walnut);}
+  .btn-danger{background:#f5e0d6; color:#a34a35; padding:0.4rem 0.8rem; font-size:0.85rem; border-radius:20px;}
+  .btn:disabled{opacity:0.5; cursor:not-allowed;}
+
+  #loginView .card{margin-top:2rem;}
+  #loginView p.error{color:#a34a35; font-weight:700; margin-top:0.8rem; display:none;}
+
+  #adminView{display:none;}
+  .status{margin-top:1rem; font-weight:700; font-size:0.9rem; display:none;}
+  .status.ok{color:var(--moss-dark);}
+  .status.err{color:#a34a35;}
+
+  .range-list{list-style:none; padding:0; margin:1rem 0;}
+  .range-list li{
+    display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    padding:0.7rem 0; border-bottom:1px solid var(--cream-2); font-size:0.95rem;
+  }
+  .range-list li:last-child{border-bottom:none;}
+
+  .add-row{display:grid; grid-template-columns:1fr 1fr auto; gap:0.8rem; align-items:end; margin-top:1.5rem;}
+  .actions-row{display:flex; gap:1rem; margin-top:2rem; align-items:center; flex-wrap:wrap;}
+  .logout{font-size:0.85rem; color:var(--walnut-2); text-decoration:underline; cursor:pointer; background:none; border:none; font-family:inherit; margin-left:auto;}
+
+  .kicker{text-transform:uppercase; letter-spacing:2px; font-size:0.75rem; font-weight:800; color:var(--moss-dark); display:block; margin-bottom:0.6rem;}
+
+  @media (max-width:520px){
+    .add-row{grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brand">Gwunder<span>stübli</span> &amp; Gwunder<span>stube</span> – Verwaltung</div>
+
+<div class="wrap">
+
+  <div id="loginView">
+    <span class="kicker">Admin-Bereich</span>
+    <h1>Belegung verwalten</h1>
+    <div class="card">
+      <label for="pw">Passwort</label>
+      <input type="password" id="pw" autocomplete="current-password">
+      <p class="error" id="loginError">Falsches Passwort.</p>
+      <div style="margin-top:1.2rem;">
+        <button class="btn btn-primary" id="loginBtn">Einloggen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminView">
+    <span class="kicker">Admin-Bereich</span>
+    <h1>Belegung verwalten</h1>
+    <p style="color:var(--walnut-2);">Hier siehst du alle aktuell belegten Zeiträume fürs Gwunderstübli. Änderungen werden erst live, wenn du unten auf „Speichern" klickst.</p>
+
+    <div class="card">
+      <h3>Aktuelle Zeiträume</h3>
+      <ul class="range-list" id="rangeList"></ul>
+
+      <div class="add-row">
+        <div>
+          <label for="newStart">Von</label>
+          <input type="date" id="newStart">
+        </div>
+        <div>
+          <label for="newEnd">Bis</label>
+          <input type="date" id="newEnd">
+        </div>
+        <button class="btn btn-secondary" id="addBtn">+ Hinzufügen</button>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn btn-primary" id="saveBtn">Speichern &amp; live schalten</button>
+        <button class="logout" id="logoutBtn">Abmelden</button>
+      </div>
+      <p class="status" id="status"></p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = 'https://gwunderstube-bookings.tobias-mahrer.workers.dev';
+
+  const loginView = document.getElementById('loginView');
+  const adminView = document.getElementById('adminView');
+  const pwInput = document.getElementById('pw');
+  const loginBtn = document.getElementById('loginBtn');
+  const loginError = document.getElementById('loginError');
+  const rangeList = document.getElementById('rangeList');
+  const addBtn = document.getElementById('addBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const statusEl = document.getElementById('status');
+  const newStart = document.getElementById('newStart');
+  const newEnd = document.getElementById('newEnd');
+
+  let ranges = [];
+  let password = sessionStorage.getItem('gw_admin_pw') || '';
+
+  function showStatus(msg, ok) {
+    statusEl.textContent = msg;
+    statusEl.className = 'status ' + (ok ? 'ok' : 'err');
+    statusEl.style.display = 'block';
+  }
+
+  function renderList() {
+    rangeList.innerHTML = '';
+    const sorted = [...ranges].sort((a, b) => a.start.localeCompare(b.start));
+    sorted.forEach((r) => {
+      const li = document.createElement('li');
+      const label = document.createElement('span');
+      label.textContent = `${r.start} → ${r.end}`;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger';
+      delBtn.textContent = 'Entfernen';
+      delBtn.addEventListener('click', () => {
+        ranges = ranges.filter((x) => !(x.start === r.start && x.end === r.end));
+        renderList();
+      });
+      li.appendChild(label);
+      li.appendChild(delBtn);
+      rangeList.appendChild(li);
+    });
+    if (sorted.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'Keine belegten Zeiträume.';
+      rangeList.appendChild(li);
+    }
+  }
+
+  async function loadRanges() {
+    const res = await fetch(API + '/api/bookings');
+    ranges = await res.json();
+    renderList();
+  }
+
+  async function login() {
+    loginError.style.display = 'none';
+    loginBtn.disabled = true;
+    try {
+      const res = await fetch(API + '/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwInput.value }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        password = pwInput.value;
+        sessionStorage.setItem('gw_admin_pw', password);
+        loginView.style.display = 'none';
+        adminView.style.display = 'block';
+        await loadRanges();
+      } else {
+        loginError.style.display = 'block';
+      }
+    } catch (e) {
+      loginError.textContent = 'Verbindungsfehler, bitte später erneut versuchen.';
+      loginError.style.display = 'block';
+    } finally {
+      loginBtn.disabled = false;
+    }
+  }
+
+  loginBtn.addEventListener('click', login);
+  pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+
+  addBtn.addEventListener('click', () => {
+    if (!newStart.value || !newEnd.value) {
+      showStatus('Bitte Start- und Enddatum wählen.', false);
+      return;
+    }
+    if (newStart.value > newEnd.value) {
+      showStatus('Das Startdatum muss vor dem Enddatum liegen.', false);
+      return;
+    }
+    ranges.push({ start: newStart.value, end: newEnd.value });
+    newStart.value = '';
+    newEnd.value = '';
+    renderList();
+    statusEl.style.display = 'none';
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    saveBtn.disabled = true;
+    try {
+      const res = await fetch(API + '/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + password },
+        body: JSON.stringify(ranges),
+      });
+      if (res.ok) {
+        showStatus('Gespeichert – die Website zeigt die neue Belegung sofort an.', true);
+      } else {
+        showStatus('Fehler beim Speichern. Bitte erneut versuchen.', false);
+      }
+    } catch (e) {
+      showStatus('Verbindungsfehler beim Speichern.', false);
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    sessionStorage.removeItem('gw_admin_pw');
+    password = '';
+    adminView.style.display = 'none';
+    loginView.style.display = 'block';
+    pwInput.value = '';
+  });
+
+  if (password) {
+    loginView.style.display = 'none';
+    adminView.style.display = 'block';
+    loadRanges();
+  }
+</script>
+
+</body>
+</html>

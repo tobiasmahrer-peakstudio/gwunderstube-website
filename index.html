@@ -532,9 +532,8 @@
     lastScrollY = y;
   });
 
-  // Belegte Zeiträume fürs Gwunderstübli: Format 'YYYY-MM-DD', jeweils inklusive Start- und Enddatum.
-  // Hier einfach Zeilen ergänzen/löschen, um die Verfügbarkeit aktuell zu halten.
-  const bookedRanges = [
+  // Fallback-Daten, falls die Live-API mal nicht erreichbar ist. Aktuelle Verwaltung läuft über /admin/.
+  let bookedRanges = [
     { start: '2026-01-01', end: '2026-01-31' },
     { start: '2026-02-01', end: '2026-02-28' },
     { start: '2026-03-01', end: '2026-03-06' },
@@ -612,6 +611,16 @@
     renderCalendar();
   });
   renderCalendar();
+
+  fetch('https://gwunderstube-bookings.tobias-mahrer.workers.dev/api/bookings')
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(data => {
+      if (Array.isArray(data)) {
+        bookedRanges = data;
+        renderCalendar();
+      }
+    })
+    .catch(() => {});
 
   const io = new IntersectionObserver((entries) => {
     entries.forEach(entry => {

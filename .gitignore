@@ -1,1 +1,4 @@
 .DS_Store
+admin-worker/node_modules/
+admin-worker/seed.json
+admin-worker/.wrangler/

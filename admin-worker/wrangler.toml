@@ -1,0 +1,7 @@
+name = "gwunderstube-bookings"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+[[kv_namespaces]]
+binding = "BOOKINGS"
+id = "8b677776b3e04b94829293e476ee2065"
