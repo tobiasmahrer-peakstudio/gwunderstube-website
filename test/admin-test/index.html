@@ -168,13 +168,12 @@
     <div class="nav-tabs">
       <button type="button" class="tab-btn active" data-section="secRanges">Zeiträume</button>
       <button type="button" class="tab-btn" data-section="secRequests">Anfragen <span id="pendingCount"></span></button>
-      <button type="button" class="tab-btn" data-section="secStays">Aufenthalte</button>
       <button type="button" class="tab-btn" data-section="secPricing">Preise</button>
     </div>
 
     <!-- ===================== ZEITRÄUME (unverändert aus dem produktiven Admin) ===================== -->
     <div class="section active" id="secRanges">
-      <p style="color:var(--walnut-2);">Hier siehst du alle aktuell belegten Zeiträume fürs Gwunderstübli. Namen sind nur hier sichtbar, nie auf der Website.</p>
+      <p style="color:var(--walnut-2);">Hier siehst du alle aktuell belegten Zeiträume fürs Gwunderstübli, inkl. Kontaktdaten, Preis und Dokument bei vollwertigen Buchungen. Namen sind nur hier sichtbar, nie auf der Website.</p>
 
       <div class="ranges-layout">
         <div class="ranges-add-col card">
@@ -235,13 +234,13 @@
 
         <div class="ranges-list-col">
           <div class="card">
-            <h3>Aktuelle Zeiträume</h3>
-            <ul class="range-list" id="rangeList"></ul>
+            <h3>Aktuelle Belegungen</h3>
+            <ul class="range-list item-list" id="rangeList"></ul>
           </div>
 
           <details class="card archive">
-            <summary>Archiv – vergangene Zeiträume <span id="rangeArchiveCount"></span></summary>
-            <ul class="range-list" id="rangeArchiveList" style="margin-top:1rem;"></ul>
+            <summary>Archiv – vergangene Belegungen <span id="rangeArchiveCount"></span></summary>
+            <ul class="range-list item-list" id="rangeArchiveList" style="margin-top:1rem;"></ul>
           </details>
         </div>
       </div>
@@ -259,19 +258,6 @@
         <h3>Bereits entschieden</h3>
         <ul class="item-list" id="decidedList"></ul>
       </div>
-    </div>
-
-    <!-- ===================== AUFENTHALTE ===================== -->
-    <div class="section" id="secStays">
-      <p style="color:var(--walnut-2);">Bestätigte Aufenthalte mit Buchungsbestätigung &amp; Rechnung als ein Dokument.</p>
-      <div class="card">
-        <h3>Kommende Aufenthalte</h3>
-        <ul class="item-list" id="staysList"></ul>
-      </div>
-      <details class="card archive">
-        <summary>Archiv – vergangene Aufenthalte <span id="archiveCount"></span></summary>
-        <ul class="item-list" id="archiveList" style="margin-top:1rem;"></ul>
-      </details>
     </div>
 
     <!-- ===================== PREISE ===================== -->
@@ -365,7 +351,17 @@
 
   let ranges = [];
 
-  function buildRangeRow(r) {
+  function removeRange(r) {
+    if (!confirm('Diesen Zeitraum wirklich entfernen?')) return Promise.resolve();
+    ranges = ranges.filter((x) => x !== r);
+    renderList();
+    renderCal();
+    return saveRangesToServer();
+  }
+
+  // Plain range entry with no matching stay record (legacy bookings from before
+  // the full-booking form existed) — just a date block with a free-text note.
+  function buildPlainRangeRow(r) {
     const li = document.createElement('li');
     const info = document.createElement('div');
     info.className = 'range-info';
@@ -397,13 +393,7 @@
     const delBtn = document.createElement('button');
     delBtn.className = 'btn btn-danger';
     delBtn.textContent = 'Entfernen';
-    delBtn.addEventListener('click', async () => {
-      if (!confirm('Diesen Zeitraum wirklich entfernen?')) return;
-      ranges = ranges.filter((x) => x !== r);
-      renderList();
-      renderCal();
-      await saveRangesToServer();
-    });
+    delBtn.addEventListener('click', () => removeRange(r));
     const actions = document.createElement('div');
     actions.className = 'item-actions';
     actions.appendChild(noteBtn);
@@ -411,6 +401,72 @@
     li.appendChild(info);
     li.appendChild(actions);
     return li;
+  }
+
+  // Range entry backed by a full stay record — expandable, with contact info,
+  // price breakdown, the invoice/confirmation document, and an editable note.
+  function buildStayRangeRow(r, s) {
+    const li = document.createElement('li');
+    li.className = 'stay-row';
+
+    const summary = document.createElement('div');
+    summary.className = 'stay-summary';
+    const info = document.createElement('div');
+    info.className = 'item-info';
+    info.innerHTML = `<strong>${s.guestName} <span class="stay-toggle-icon">▸</span></strong>
+      <span class="item-meta">${formatDateDisplay(s.arrival)} – ${formatDateDisplay(s.departure)} · ${s.numPeople} Pers.</span>
+      <span class="item-meta">Rechnung ${s.invoiceNumber} · Total CHF ${s.total}.–</span>`;
+    const actions = document.createElement('div');
+    actions.className = 'item-actions';
+    const docBtn = document.createElement('button');
+    docBtn.className = 'btn-small'; docBtn.textContent = '📄 Dokument';
+    docBtn.addEventListener('click', (e) => { e.stopPropagation(); openPdf(s.id); });
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger'; delBtn.textContent = 'Entfernen';
+    delBtn.addEventListener('click', (e) => { e.stopPropagation(); removeRange(r); });
+    actions.appendChild(docBtn);
+    actions.appendChild(delBtn);
+    summary.appendChild(info);
+    summary.appendChild(actions);
+    summary.addEventListener('click', () => li.classList.toggle('open'));
+
+    const extraCostsText = (s.extraCosts && s.extraCosts.length)
+      ? ' + ' + s.extraCosts.map((c) => `${c.label}: CHF ${c.amount}.–`).join(', ')
+      : '';
+    const details = document.createElement('div');
+    details.className = 'stay-details';
+    details.innerHTML = `
+      <p><strong>Adresse:</strong> ${s.address ? s.address.replace(/\n/g, ', ') : '–'}</p>
+      <p><strong>E-Mail:</strong> ${s.email || '–'}</p>
+      <p><strong>Preis:</strong> CHF ${s.weeklyPrice ?? '–'}.–${extraCostsText} = <strong>CHF ${s.total}.–</strong></p>
+      <p><strong>Notiz:</strong> <span class="stay-note-text">${s.message ? s.message : '–'}</span></p>
+    `;
+    const editNoteBtn = document.createElement('button');
+    editNoteBtn.className = 'btn-small';
+    editNoteBtn.textContent = '✏️ Notiz bearbeiten';
+    editNoteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const updated = prompt('Notiz für diesen Aufenthalt:', s.message || '');
+      if (updated === null) return;
+      const res = await fetch(`${API}/api/stays/${s.id}/note`, {
+        method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ message: updated.trim() }),
+      });
+      if (res.ok) {
+        s.message = updated.trim();
+        details.querySelector('.stay-note-text').textContent = s.message ? s.message : '–';
+      }
+    });
+    details.appendChild(editNoteBtn);
+
+    li.appendChild(summary);
+    li.appendChild(details);
+    return li;
+  }
+
+  function buildRangeRow(r) {
+    const stay = stays.find((s) => s.status === 'confirmed' && s.arrival === r.start && s.guestName === r.name);
+    return stay ? buildStayRangeRow(r, stay) : buildPlainRangeRow(r);
   }
 
   function renderList() {
@@ -607,11 +663,10 @@
   cNext.addEventListener('click', () => { cMonth++; if (cMonth > 11) { cMonth = 0; cYear++; } renderCal(); });
 
   // =====================================================================
-  // ANFRAGEN & AUFENTHALTE
+  // ANFRAGEN
   // =====================================================================
   const pendingList = document.getElementById('pendingList');
   const decidedList = document.getElementById('decidedList');
-  const staysList = document.getElementById('staysList');
   const requestsStatus = document.getElementById('requestsStatus');
   let stays = [];
 
@@ -619,6 +674,7 @@
     const res = await fetch(API + '/api/stays/full', { headers: authHeaders() });
     stays = await res.json();
     renderStays();
+    renderList(); // the merged Zeiträume list enriches rows using stay data too
   }
 
   async function openPdf(id) {
@@ -646,7 +702,6 @@
   function renderStays() {
     const pending = stays.filter(s => s.status === 'pending').sort((a,b) => a.createdAt.localeCompare(b.createdAt));
     const decided = stays.filter(s => s.status !== 'pending' && s.status !== 'confirmed').sort((a,b) => (b.decidedAt||'').localeCompare(a.decidedAt||''));
-    const confirmed = stays.filter(s => s.status === 'confirmed').sort((a,b) => a.arrival.localeCompare(b.arrival));
 
     document.getElementById('pendingCount').textContent = pending.length ? `(${pending.length})` : '';
 
@@ -734,7 +789,7 @@
         const data = await res.json();
         if (res.ok) {
           showStatus(requestsStatus, `Angenommen – Rechnung ${data.invoiceNumber} erstellt.`, true);
-          await loadStays();
+          await Promise.all([loadRanges(), loadStays()]);
         } else {
           showStatus(requestsStatus, data.error || 'Fehler beim Bestätigen.', false);
         }
@@ -758,76 +813,6 @@
       decidedList.appendChild(li);
     });
     if (decided.length === 0) decidedList.innerHTML = '<li>Noch keine abgelehnten Anfragen.</li>';
-
-    function buildStayRow(s) {
-      const li = document.createElement('li');
-      li.className = 'stay-row';
-
-      const summary = document.createElement('div');
-      summary.className = 'stay-summary';
-      const info = document.createElement('div');
-      info.className = 'item-info';
-      info.innerHTML = `<strong>${s.guestName} <span class="stay-toggle-icon">▸</span></strong>
-        <span class="item-meta">${formatDateDisplay(s.arrival)} – ${formatDateDisplay(s.departure)} · ${s.numPeople} Pers.</span>
-        <span class="item-meta">Rechnung ${s.invoiceNumber} · Total CHF ${s.total}.–</span>`;
-      const actions = document.createElement('div');
-      actions.className = 'item-actions';
-      const docBtn = document.createElement('button');
-      docBtn.className = 'btn-small'; docBtn.textContent = '📄 Dokument';
-      docBtn.addEventListener('click', (e) => { e.stopPropagation(); openPdf(s.id); });
-      actions.appendChild(docBtn);
-      summary.appendChild(info);
-      summary.appendChild(actions);
-      summary.addEventListener('click', () => li.classList.toggle('open'));
-
-      const extraCostsText = (s.extraCosts && s.extraCosts.length)
-        ? ' + ' + s.extraCosts.map((c) => `${c.label}: CHF ${c.amount}.–`).join(', ')
-        : '';
-      const details = document.createElement('div');
-      details.className = 'stay-details';
-      details.innerHTML = `
-        <p><strong>Adresse:</strong> ${s.address ? s.address.replace(/\n/g, ', ') : '–'}</p>
-        <p><strong>E-Mail:</strong> ${s.email || '–'}</p>
-        <p><strong>Preis:</strong> CHF ${s.weeklyPrice ?? '–'}.–${extraCostsText} = <strong>CHF ${s.total}.–</strong></p>
-        <p><strong>Notiz:</strong> <span class="stay-note-text">${s.message ? s.message : '–'}</span></p>
-      `;
-      const editNoteBtn = document.createElement('button');
-      editNoteBtn.className = 'btn-small';
-      editNoteBtn.textContent = '✏️ Notiz bearbeiten';
-      editNoteBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const updated = prompt('Notiz für diesen Aufenthalt:', s.message || '');
-        if (updated === null) return;
-        const res = await fetch(`${API}/api/stays/${s.id}/note`, {
-          method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ message: updated.trim() }),
-        });
-        if (res.ok) {
-          s.message = updated.trim();
-          details.querySelector('.stay-note-text').textContent = s.message ? s.message : '–';
-        }
-      });
-      details.appendChild(editNoteBtn);
-
-      li.appendChild(summary);
-      li.appendChild(details);
-      return li;
-    }
-
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const upcoming = confirmed.filter(s => s.departure >= todayStr);
-    const past = confirmed.filter(s => s.departure < todayStr).sort((a, b) => b.arrival.localeCompare(a.arrival));
-
-    staysList.innerHTML = '';
-    upcoming.forEach((s) => staysList.appendChild(buildStayRow(s)));
-    if (upcoming.length === 0) staysList.innerHTML = '<li>Keine kommenden Aufenthalte.</li>';
-
-    const archiveList = document.getElementById('archiveList');
-    const archiveCount = document.getElementById('archiveCount');
-    archiveCount.textContent = past.length ? `(${past.length})` : '(0)';
-    archiveList.innerHTML = '';
-    past.forEach((s) => archiveList.appendChild(buildStayRow(s)));
-    if (past.length === 0) archiveList.innerHTML = '<li>Noch keine vergangenen Aufenthalte.</li>';
   }
 
   // =====================================================================
