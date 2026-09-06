@@ -92,7 +92,6 @@ export async function buildBookingDocumentPdf(stay, settings) {
   text(settings.companyName || 'Gwunderstübli', MARGIN, y, { font: bold, size: 22, color: COLORS.gold });
   y -= 18;
   text(settings.companyAddress || '', MARGIN, y, { size: 9.5, color: COLORS.walnut2 });
-  textR('ENTWURF – vor Verwendung juristisch prüfen lassen', PAGE_W - MARGIN, y + 4, { size: 7.5, font: italic, color: COLORS.red });
   y -= 22;
   rule(y, COLORS.goldLight, 1.5);
   y -= 32;
@@ -113,7 +112,7 @@ export async function buildBookingDocumentPdf(stay, settings) {
   text(fmtDate(new Date().toISOString().slice(0, 10)), MARGIN + metaColW + 14, metaY, { size: 12, color: COLORS.bark });
   text('ZAHLBAR BIS', MARGIN + metaColW * 2 + 14, labelY, { size: 7, font: bold, color: COLORS.walnut2 });
   text(fmtDate(deadline), MARGIN + metaColW * 2 + 14, metaY, { size: 12, color: COLORS.bark });
-  y -= 76;
+  y -= 66;
 
   // --- Two columns: Gast / Aufenthalt ---
   const colW = CONTENT_W / 2 - 10;
@@ -123,17 +122,17 @@ export async function buildBookingDocumentPdf(stay, settings) {
   text('AUFENTHALT', col2X, y, { size: 8, font: bold, color: COLORS.moss });
   y -= 16;
   text(stay.guestName || '', MARGIN, y, { size: 10.5, font: bold });
-  text(`Anreise ${fmtDate(stay.arrival)}`, col2X, y, { size: 10.5 });
+  text(`Anreise ${fmtDate(stay.arrival)}, ab 15:00 Uhr`, col2X, y, { size: 10.5 });
   y -= 14;
   const addrLines = (stay.address || '').split('\n');
   text(addrLines[0] || '', MARGIN, y, { size: 10 });
-  text(`Abreise ${fmtDate(stay.departure)}`, col2X, y, { size: 10.5 });
+  text(`Abreise ${fmtDate(stay.departure)}, bis 10:00 Uhr`, col2X, y, { size: 10.5 });
   y -= 14;
   text(addrLines.slice(1).join(', '), MARGIN, y, { size: 10 });
   text(`${stay.numPeople} ${stay.numPeople === 1 ? 'Person' : 'Personen'}`, col2X, y, { size: 10.5 });
   y -= 14;
   text(stay.email || '', MARGIN, y, { size: 10 });
-  y = Math.min(y, topY - 56) - 20;
+  y = Math.min(y, topY - 56) - 14;
 
   // --- Kostenübersicht ---
   text('Kostenübersicht', MARGIN, y, { font: bold, size: 13, color: COLORS.bark });
@@ -169,7 +168,7 @@ export async function buildBookingDocumentPdf(stay, settings) {
   }
   text('Total', MARGIN + 10, y, { size: 13, font: bold, color: COLORS.bark });
   textR(`CHF ${fmtMoney(stay.total + vat)}`, PAGE_W - MARGIN - 10, y, { size: 13, font: bold, color: COLORS.gold });
-  y -= 34;
+  y -= 26;
 
   // --- Zahlungsinformationen box ---
   ensureSpace(80);
@@ -178,7 +177,7 @@ export async function buildBookingDocumentPdf(stay, settings) {
   text(`Kontoinhaber: ${settings.accountHolder || ''}`, MARGIN + 14, y - 20, { size: 10 });
   text(`IBAN: ${settings.iban || ''}`, MARGIN + 14, y - 36, { size: 10 });
   text(`Währung: ${settings.currency || 'CHF'}`, MARGIN + 14, y - 52, { size: 10 });
-  y -= 90;
+  y -= 72;
 
   // --- Legal / booking terms ---
   ensureSpace(30);
@@ -186,7 +185,7 @@ export async function buildBookingDocumentPdf(stay, settings) {
   y -= 22;
 
   const clauses = [
-    ['Mietobjekt', 'Gwunderstübli, Rawilstrasse 27, 3775 Lenk (Ferienstudio für 2 Personen).'],
+    ['Mietobjekt', 'Gwunderstübli, Rawilstrasse 27, 3775 Lenk (Ferienstudio für 2 Personen). Anreise ab 15:00 Uhr, Abreise bis 10:00 Uhr.'],
     ['Zahlungsbedingungen',
       `Der Mietzins ist innert ${settings.paymentTermsDays || 30} Tagen ab Rechnungsdatum zu begleichen. ` +
       'Beginnt der Aufenthalt innerhalb dieser Frist, ist der Betrag spätestens vor der Anreise zu begleichen ' +
@@ -227,7 +226,7 @@ export async function buildBookingDocumentPdf(stay, settings) {
       text(line, MARGIN, y, { size: 9.5, color: COLORS.walnut2 });
       y -= 13;
     });
-    y -= 8;
+    y -= 4;
   });
 
   // --- Vertragsschluss ---
@@ -247,8 +246,10 @@ export async function buildBookingDocumentPdf(stay, settings) {
   });
 
   // --- Footer ---
-  y -= 16;
-  ensureSpace(16);
+  // Nothing follows this line, so it only needs to clear the page edge, not the
+  // full ensureSpace() reserve meant for content with more sections after it.
+  y -= 10;
+  if (y < 20) newPage();
   text(`Automatisch erstellt am ${fmtDate(new Date().toISOString().slice(0, 10))}.`, MARGIN, y, { size: 8, color: COLORS.walnut2, font: italic });
 
   return doc.save();
