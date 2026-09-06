@@ -130,6 +130,14 @@
       <div class="field"><label for="message">Nachricht (optional)</label><textarea id="message"></textarea></div>
       <input type="text" class="honeypot" id="website" tabindex="-1" autocomplete="off">
 
+      <div class="field" style="display:flex; align-items:flex-start; gap:0.6rem;">
+        <input type="checkbox" id="agbAccepted" style="width:auto; margin-top:0.2rem;">
+        <label for="agbAccepted" style="margin:0; font-weight:400; color:var(--text);">
+          Mit dem Absenden bestätige ich verbindlich den gewünschten Zeitraum und akzeptiere die
+          <a href="../agb/" target="_blank" style="color:var(--gold); font-weight:700;">AGB</a>.
+        </label>
+      </div>
+
       <button class="btn btn-primary" id="submitBtn">Anfrage senden</button>
       <p class="status" id="status"></p>
     </div>
@@ -240,9 +248,14 @@
     const numPeople = parseInt(document.getElementById('numPeople').value, 10) || 1;
     const message = document.getElementById('message').value.trim();
     const website = document.getElementById('website').value;
+    const agbAccepted = document.getElementById('agbAccepted').checked;
 
     if (!guestName || !address || !email) {
       showStatus('Bitte Name, Adresse und E-Mail ausfüllen.', false);
+      return;
+    }
+    if (!agbAccepted) {
+      showStatus('Bitte die AGB akzeptieren, um die Anfrage verbindlich zu senden.', false);
       return;
     }
 
@@ -251,12 +264,12 @@
       if (selectedStartIdx === null) { showStatus('Bitte zuerst eine Woche auswählen.', false); return; }
       const arrival = weeks[selectedStartIdx].start;
       const departure = weeks[selectedStartIdx + weekCount - 1].end;
-      payload = { type: 'week', arrival, departure, guestName, address, email, numPeople, message, website };
+      payload = { type: 'week', arrival, departure, guestName, address, email, numPeople, message, website, agbAccepted };
     } else {
       const arrival = `${document.getElementById('cArrYear').value}-${document.getElementById('cArrMonth').value}-${document.getElementById('cArrDay').value}`;
       const departure = `${document.getElementById('cDepYear').value}-${document.getElementById('cDepMonth').value}-${document.getElementById('cDepDay').value}`;
       if (arrival >= departure) { showStatus('Die Abreise muss nach der Anreise liegen.', false); return; }
-      payload = { type: 'custom', arrival, departure, guestName, address, email, numPeople, message, website };
+      payload = { type: 'custom', arrival, departure, guestName, address, email, numPeople, message, website, agbAccepted };
     }
 
     const btn = document.getElementById('submitBtn');

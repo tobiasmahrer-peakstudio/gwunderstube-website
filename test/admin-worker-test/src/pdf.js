@@ -108,15 +108,17 @@ export async function buildContractPdf(stay, settings) {
   const red = rgb(0.64, 0.29, 0.2);
   let y = 800;
 
-  drawText(page, 'ENTWURF – vor Verwendung juristisch prüfen lassen', 40, y, bold, 9, red);
+  drawText(page, 'ENTWURF – Vertragsinhalt vor Verwendung juristisch prüfen lassen', 40, y, bold, 9, red);
   y -= 24;
-  drawText(page, 'MIETVERTRAG FÜR FERIENWOHNUNG', 40, y, bold, 16);
+  drawText(page, 'BUCHUNGSBESTÄTIGUNG', 40, y, bold, 16);
   y -= 30;
+
+  const agbDate = stay.agbAcceptedAt ? fmtDate(stay.agbAcceptedAt.slice(0, 10)) : fmtDate(stay.createdAt.slice(0, 10));
 
   const lines = [
     ['1. Vertragsparteien', true],
     [`Vermieterin: ${settings.companyName || 'Gwunderstübli'}, ${settings.companyAddress || ''}`, false],
-    [`Mieter/in: ${stay.guestName || ''}, ${stay.address || ''}, ${stay.email || ''}`, false],
+    [`Gast: ${stay.guestName || ''}, ${stay.address || ''}, ${stay.email || ''}`, false],
     ['', false],
     ['2. Mietobjekt', true],
     ['Gwunderstübli, Rawilstrasse 27, 3775 Lenk (Ferienstudio für 2 Personen)', false],
@@ -130,17 +132,23 @@ export async function buildContractPdf(stay, settings) {
     [`innert ${settings.paymentTermsDays || 14} Tagen ab Rechnungsdatum zu begleichen.`, false],
     ['', false],
     ['5. Rücktritt / Stornierung', true],
-    ['Ein Rücktritt vom Vertrag ist bis 14 Tage vor Anreise kostenlos möglich. Bei späterem', false],
-    ['Rücktritt oder Nichtantritt bleibt der vereinbarte Mietzins geschuldet, sofern das Objekt', false],
-    ['nicht anderweitig vermietet werden kann.', false],
+    ['Ein Rücktritt ist bis 14 Tage vor Anreise kostenlos möglich. Bei späterem Rücktritt', false],
+    ['oder Nichtantritt bleibt der vereinbarte Mietzins geschuldet, sofern das Objekt nicht', false],
+    ['anderweitig vermietet werden kann.', false],
     ['', false],
     ['6. Hausordnung und Haftung', true],
-    ['Der/die Mieter/in verpflichtet sich, das Mietobjekt sorgfältig zu behandeln und die', false],
-    ['Hausordnung einzuhalten. Für Schäden, die während der Mietdauer entstehen, haftet', false],
-    ['der/die Mieter/in.', false],
+    ['Der Gast verpflichtet sich, das Mietobjekt sorgfältig zu behandeln und die Hausordnung', false],
+    ['einzuhalten. Für Schäden, die während der Mietdauer entstehen, haftet der Gast.', false],
     ['', false],
     ['7. Anwendbares Recht', true],
     ['Es gilt schweizerisches Recht. Gerichtsstand ist Lenk im Simmental.', false],
+    ['', false],
+    ['8. Vertragsschluss', true],
+    [`Der Gast hat am ${agbDate} mit dem Absenden der Buchungsanfrage die Allgemeinen`, false],
+    ['Geschäftsbedingungen (AGB) der Vermieterin akzeptiert und den oben genannten Zeitraum', false],
+    ['verbindlich angefragt. Mit der Bestätigung durch die Vermieterin ist der Mietvertrag', false],
+    ['zu den hier aufgeführten Bedingungen zustande gekommen. Eine separate Unterschrift ist', false],
+    ['nicht erforderlich.', false],
   ];
 
   for (const [text, isHeading] of lines) {
@@ -155,16 +163,12 @@ export async function buildContractPdf(stay, settings) {
   }
 
   y -= 30;
-  if (y < 100) {
+  if (y < 60) {
     const next = await newPage(doc);
     page = next.page; font = next.font; bold = next.bold;
     y = 800;
   }
-  drawText(page, `Ort/Datum: Lenk, ${fmtDate(new Date().toISOString().slice(0, 10))}`, 40, y, font, 10);
-  y -= 40;
-  drawText(page, 'Unterschrift Vermieterin: ____________________', 40, y, font, 10);
-  y -= 30;
-  drawText(page, 'Unterschrift Mieter/in: ____________________', 40, y, font, 10);
+  drawText(page, `Diese Buchungsbestätigung wurde automatisch erstellt am ${fmtDate(new Date().toISOString().slice(0, 10))}.`, 40, y, font, 9, rgb(0.4, 0.36, 0.33));
 
   return doc.save();
 }

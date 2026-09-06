@@ -161,6 +161,9 @@ async function handleCreateRequest(request, env) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return err('Ungültige E-Mail-Adresse.');
   }
+  if (body.agbAccepted !== true) {
+    return err('Die AGB müssen akzeptiert werden.');
+  }
 
   const isCustom = body.type === 'custom';
   const arrival = body.arrival;
@@ -208,6 +211,8 @@ async function handleCreateRequest(request, env) {
     total: weeklyPrice,
     invoiceNumber: null,
     message,
+    agbAccepted: true,
+    agbAcceptedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     decidedAt: null,
   };
