@@ -134,7 +134,7 @@
 
     <div class="card" id="customPanel" style="display:none;">
       <h3>Gewünschter Zeitraum</h3>
-      <p style="color:var(--walnut-2); font-size:0.9rem;">Für individuelle Zeiträume gibt es noch keinen automatischen Preis – wir melden uns mit einem Angebot.</p>
+      <p style="color:var(--walnut-2); font-size:0.9rem;">Normalerweise vermieten wir wochenweise (Samstag bis Samstag). In der Nebensaison oder aus besonderen Gründen können wir aber eine Ausnahme machen – dafür brauchen wir eine Anfrage, damit wir das kurz prüfen können.</p>
       <div class="cal-box">
         <div class="cal-panel-head">
           <button type="button" id="ccPrev">‹</button>
@@ -147,6 +147,10 @@
           <span><span class="cdot picked"></span>Ausgewählt</span>
         </div>
         <p class="hint" id="ccHint">Ersten Tag anklicken (Anreise), dann letzten Tag (Abreise).</p>
+      </div>
+      <div class="price-box" id="customPriceBox" style="display:none;">
+        <span id="customPriceLabel">Voraussichtlicher Preis</span>
+        <span class="amount" id="customPriceAmount"></span>
       </div>
     </div>
 
@@ -273,6 +277,28 @@
       ccGrid.appendChild(el);
     }
   }
+  const customPriceBox = document.getElementById('customPriceBox');
+  const customPriceAmount = document.getElementById('customPriceAmount');
+  const customPriceLabel = document.getElementById('customPriceLabel');
+
+  async function updateCustomPrice() {
+    if (!cPickStart || !cPickEnd) { customPriceBox.style.display = 'none'; return; }
+    try {
+      const res = await fetch(API + `/api/price?arrival=${cPickStart}&departure=${cPickEnd}`);
+      const data = await res.json();
+      if (typeof data.price === 'number') {
+        customPriceLabel.textContent = 'Voraussichtlicher Preis';
+        customPriceAmount.textContent = `CHF ${data.price}.–`;
+      } else {
+        customPriceLabel.textContent = 'Preis';
+        customPriceAmount.textContent = 'auf Anfrage';
+      }
+      customPriceBox.style.display = 'flex';
+    } catch (e) {
+      customPriceBox.style.display = 'none';
+    }
+  }
+
   function onCustomDayClick(dateStr) {
     if (!cPickStart || (cPickStart && cPickEnd)) {
       cPickStart = dateStr; cPickEnd = null;
@@ -284,6 +310,7 @@
       cPickEnd = dateStr;
       ccHint.textContent = `Ausgewählt: ${fmtDate(cPickStart)} – ${fmtDate(cPickEnd)}.`;
     }
+    updateCustomPrice();
     renderCustomCal();
   }
   ccPrev.addEventListener('click', () => { ccMonth--; if (ccMonth < 0) { ccMonth = 11; ccYear--; } renderCustomCal(); });

@@ -465,6 +465,14 @@ export default {
     if (path === '/api/weeks' && request.method === 'GET') {
       return handleWeeks(request, env);
     }
+    if (path === '/api/price' && request.method === 'GET') {
+      const arrival = url.searchParams.get('arrival');
+      const departure = url.searchParams.get('departure');
+      if (!DATE_RE.test(arrival) || !DATE_RE.test(departure) || arrival >= departure) {
+        return err('Ungültiger Zeitraum.');
+      }
+      return json({ price: await computeStayPrice(env, arrival, departure) });
+    }
     if (path === '/api/weekpricing' && request.method === 'GET') {
       if (!isAuthorized(request, env)) return err('Unauthorized', 401);
       return json(await readJSON(env, 'weekPricing', DEFAULT_WEEK_PRICING));
