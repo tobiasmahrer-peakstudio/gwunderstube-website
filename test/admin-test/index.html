@@ -209,6 +209,11 @@
         </div>
         <p class="status" id="status"></p>
       </div>
+
+      <details class="card archive">
+        <summary>Archiv – vergangene Zeiträume <span id="rangeArchiveCount"></span></summary>
+        <ul class="range-list" id="rangeArchiveList" style="margin-top:1rem;"></ul>
+      </details>
     </div>
 
     <!-- ===================== ANFRAGEN ===================== -->
@@ -384,38 +389,55 @@
 
   let ranges = [];
 
-  function renderList() {
-    rangeList.innerHTML = '';
-    const sorted = [...ranges].sort((a, b) => a.start.localeCompare(b.start));
-    sorted.forEach((r) => {
-      const li = document.createElement('li');
-      const info = document.createElement('div');
-      info.className = 'range-info';
-      const label = document.createElement('span');
-      label.textContent = `${formatDateDisplay(r.start)} → ${formatDateDisplay(r.end)}`;
-      info.appendChild(label);
-      if (r.name) {
-        const nameEl = document.createElement('span');
-        nameEl.className = 'range-name';
-        nameEl.textContent = '👤 ' + r.name;
-        info.appendChild(nameEl);
-      }
-      const delBtn = document.createElement('button');
-      delBtn.className = 'btn btn-danger';
-      delBtn.textContent = 'Entfernen';
-      delBtn.addEventListener('click', () => {
-        ranges = ranges.filter((x) => x !== r);
-        renderList();
-        renderCal();
-      });
-      li.appendChild(info);
-      li.appendChild(delBtn);
-      rangeList.appendChild(li);
+  function buildRangeRow(r) {
+    const li = document.createElement('li');
+    const info = document.createElement('div');
+    info.className = 'range-info';
+    const label = document.createElement('span');
+    label.textContent = `${formatDateDisplay(r.start)} → ${formatDateDisplay(r.end)}`;
+    info.appendChild(label);
+    if (r.name) {
+      const nameEl = document.createElement('span');
+      nameEl.className = 'range-name';
+      nameEl.textContent = '👤 ' + r.name;
+      info.appendChild(nameEl);
+    }
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger';
+    delBtn.textContent = 'Entfernen';
+    delBtn.addEventListener('click', () => {
+      ranges = ranges.filter((x) => x !== r);
+      renderList();
+      renderCal();
     });
-    if (sorted.length === 0) {
+    li.appendChild(info);
+    li.appendChild(delBtn);
+    return li;
+  }
+
+  function renderList() {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const sorted = [...ranges].sort((a, b) => a.start.localeCompare(b.start));
+    const upcoming = sorted.filter((r) => r.end >= todayStr);
+    const past = sorted.filter((r) => r.end < todayStr).reverse();
+
+    rangeList.innerHTML = '';
+    upcoming.forEach((r) => rangeList.appendChild(buildRangeRow(r)));
+    if (upcoming.length === 0) {
       const li = document.createElement('li');
-      li.textContent = 'Keine belegten Zeiträume.';
+      li.textContent = 'Keine kommenden Zeiträume.';
       rangeList.appendChild(li);
+    }
+
+    const rangeArchiveList = document.getElementById('rangeArchiveList');
+    const rangeArchiveCount = document.getElementById('rangeArchiveCount');
+    rangeArchiveCount.textContent = `(${past.length})`;
+    rangeArchiveList.innerHTML = '';
+    past.forEach((r) => rangeArchiveList.appendChild(buildRangeRow(r)));
+    if (past.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'Keine vergangenen Zeiträume.';
+      rangeArchiveList.appendChild(li);
     }
   }
 
