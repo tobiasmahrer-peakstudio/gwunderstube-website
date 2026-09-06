@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Belegung verwalten – Gwunderstübli</title>
+<title>Backoffice – Gwunderstübli</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -18,20 +18,31 @@
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Nunito Sans', sans-serif; color:var(--text); background:var(--cream); line-height:1.6;}
   h1,h2,h3{font-family:'Playfair Display', serif; color:var(--bark); line-height:1.2; margin:0 0 0.4rem;}
-  .brand{font-family:'Poppins', sans-serif; font-weight:600; font-size:1.1rem; padding:1.2rem 1.5rem; border-bottom:1px solid rgba(61,43,32,0.08);}
+  .brand{font-family:'Poppins', sans-serif; font-weight:600; font-size:1.1rem; padding:1.2rem 1.5rem; border-bottom:1px solid rgba(61,43,32,0.08); display:flex; align-items:center;}
   .brand span{color:var(--moss);}
-  .wrap{max-width:640px; margin:0 auto; padding:3rem 1.5rem;}
+  .wrap{max-width:1100px; margin:0 auto; padding:3rem 1.5rem;}
 
-  .card{background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:2rem;}
+  .ranges-layout{display:grid; grid-template-columns:380px 1fr; gap:1.5rem; align-items:start;}
+  .ranges-add-col{position:sticky; top:1.5rem;}
+  .ranges-list-col .card{max-height:75vh; overflow-y:auto;}
+  @media (max-width:820px){
+    .ranges-layout{grid-template-columns:1fr;}
+    .ranges-add-col{position:static;}
+    .ranges-list-col .card{max-height:none; overflow-y:visible;}
+  }
+
+  .card{background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:2rem; margin-bottom:1.5rem;}
   label{display:block; font-weight:700; font-size:0.85rem; margin-bottom:0.4rem; color:var(--walnut-2);}
-  input[type="password"], input[type="text"], select{
+  input[type="password"], input[type="text"], input[type="email"], input[type="number"], textarea, select{
     width:100%; padding:0.75rem 1rem; border-radius:10px; border:1px solid var(--cream-2);
     background:var(--cream); font-size:1rem; font-family:inherit; color:var(--text);
   }
-  input:focus, select:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  textarea{resize:vertical; min-height:60px;}
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--gold); outline-offset:1px;}
   .date-fields{display:grid; grid-template-columns:70px 1fr 90px; gap:0.5rem;}
   select{min-width:0;}
   .hint{font-size:0.8rem; color:var(--walnut-2); margin-top:0.3rem;}
+  .field{margin-bottom:1.1rem;}
   .btn{
     display:inline-block; padding:0.8rem 1.6rem; border-radius:30px; border:none; cursor:pointer;
     font-weight:800; font-size:0.95rem; font-family:inherit;
@@ -41,7 +52,9 @@
   .btn-primary:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(184,134,63,0.4);}
   .btn-secondary{background:var(--cream-2); color:var(--walnut);}
   .btn-danger{background:#f5e0d6; color:#a34a35; padding:0.4rem 0.8rem; font-size:0.85rem; border-radius:20px;}
+  .btn-ok{background:#eef1e9; color:var(--moss-dark); padding:0.4rem 0.8rem; font-size:0.85rem; border-radius:20px;}
   .btn:disabled{opacity:0.5; cursor:not-allowed;}
+  .btn-small{padding:0.4rem 0.9rem; font-size:0.82rem; border-radius:20px; border:1px solid var(--cream-2); background:#fff; color:var(--walnut); cursor:pointer; font-weight:700;}
 
   #loginView .card{margin-top:2rem;}
   #loginView p.error{color:#a34a35; font-weight:700; margin-top:0.8rem; display:none;}
@@ -51,14 +64,17 @@
   .status.ok{color:var(--moss-dark);}
   .status.err{color:#a34a35;}
 
-  .range-list{list-style:none; padding:0; margin:1rem 0;}
-  .range-list li{
-    display:flex; align-items:center; justify-content:space-between; gap:1rem;
-    padding:0.7rem 0; border-bottom:1px solid var(--cream-2); font-size:0.95rem;
+  .range-list, .item-list{list-style:none; padding:0; margin:1rem 0;}
+  .range-list li, .item-list li{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;
+    padding:0.9rem 0; border-bottom:1px solid var(--cream-2); font-size:0.95rem;
   }
-  .range-list li:last-child{border-bottom:none;}
-  .range-info{display:flex; flex-direction:column; gap:0.15rem;}
+  .range-list li:last-child, .item-list li:last-child{border-bottom:none;}
+  .range-info, .item-info{display:flex; flex-direction:column; gap:0.15rem;}
   .range-name{font-size:0.82rem; color:var(--moss-dark); font-weight:700;}
+  .range-note{font-size:0.82rem; color:var(--walnut-2); font-style:italic;}
+  .item-meta{font-size:0.82rem; color:var(--walnut-2);}
+  .item-actions{display:flex; gap:0.5rem; flex-shrink:0; flex-wrap:wrap;}
 
   .add-row{display:flex; flex-direction:column; gap:1.2rem; margin-top:1.5rem;}
   .actions-row{display:flex; gap:1rem; margin-top:2rem; align-items:center; flex-wrap:wrap;}
@@ -86,17 +102,46 @@
   .cal-legend span{display:inline-flex; align-items:center; gap:0.4rem;}
   .cdot{width:10px; height:10px; border-radius:50%; display:inline-block;}
   .cdot.booked{background:#c1543f;} .cdot.picked{background:var(--gold);}
+
+  .nav-tabs{display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem;}
+  .nav-tabs button{padding:0.6rem 1.1rem; border-radius:20px; border:1px solid var(--cream-2); background:#fff; cursor:pointer; font-weight:700; font-family:inherit; font-size:0.88rem; color:var(--walnut-2);}
+  .nav-tabs button.active{background:var(--bark); color:#fff; border-color:var(--bark);}
+  .section{display:none;}
+  .section.active{display:block;}
+
+  .price-week-row{display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.5rem 0; border-bottom:1px solid var(--cream-2); font-size:0.9rem;}
+  .price-week-row input{width:100px;}
+  .badge{font-size:0.72rem; font-weight:800; padding:0.2rem 0.6rem; border-radius:20px;}
+  .badge.free{background:#eef1e9; color:var(--moss-dark);}
+  .badge.booked, .badge.requested{background:#f5e0d6; color:#a34a35;}
+  .badge.pending{background:#fde9c8; color:#8a5a12;}
+  .badge.confirmed{background:#eef1e9; color:var(--moss-dark);}
+  .badge.rejected{background:#f5e0d6; color:#a34a35;}
+
+  .approve-form{display:none; margin-top:0.8rem; padding-top:0.8rem; border-top:1px dashed var(--cream-2); width:100%;}
+  .approve-form.open{display:block;}
+
+  details.archive summary{
+    cursor:pointer; font-family:'Playfair Display', serif; font-size:1.15rem; color:var(--bark);
+    list-style:none; display:flex; align-items:center; gap:0.5rem;
+  }
+  details.archive summary::-webkit-details-marker{display:none;}
+  details.archive summary::before{content:'▸'; color:var(--gold); transition:transform .2s ease;}
+  details.archive[open] summary::before{transform:rotate(90deg);}
+  details.archive #archiveCount{font-family:'Nunito Sans', sans-serif; font-size:0.8rem; color:var(--walnut-2); font-weight:700;}
+  .regen-btn{font-size:0.72rem; color:var(--walnut-2); background:none; border:none; text-decoration:underline; cursor:pointer; font-family:inherit; padding:0;}
+  .extra-cost-row{display:grid; grid-template-columns:1fr 100px auto; gap:0.5rem; margin-bottom:0.5rem;}
 </style>
 </head>
 <body>
 
-<div class="brand">Gwunder<span>stübli</span> &amp; Gwunder<span>stube</span> – Verwaltung</div>
+<div class="brand">Gwunder<span>stübli</span> &amp; Gwunder<span>stube</span> – Backoffice</div>
 
 <div class="wrap">
 
   <div id="loginView">
     <span class="kicker">Admin-Bereich</span>
-    <h1>Belegung verwalten</h1>
+    <h1>Backoffice</h1>
     <div class="card">
       <label for="pw">Passwort</label>
       <input type="password" id="pw" autocomplete="current-password">
@@ -109,60 +154,167 @@
 
   <div id="adminView">
     <span class="kicker">Admin-Bereich</span>
-    <h1>Belegung verwalten</h1>
-    <p style="color:var(--walnut-2);">Hier siehst du alle aktuell belegten Zeiträume fürs Gwunderstübli. Namen sind nur hier sichtbar, nie auf der Website. Änderungen werden erst live, wenn du unten auf „Speichern" klickst.</p>
+    <h1>Backoffice</h1>
 
-    <div class="card">
-      <h3>Aktuelle Zeiträume</h3>
-      <ul class="range-list" id="rangeList"></ul>
+    <div class="nav-tabs">
+      <button type="button" class="tab-btn active" data-section="secRanges">Zeiträume</button>
+      <button type="button" class="tab-btn" data-section="secRequests">Anfragen <span id="pendingCount"></span></button>
+      <button type="button" class="tab-btn" data-section="secStays">Aufenthalte</button>
+      <button type="button" class="tab-btn" data-section="secPricing">Preise</button>
+      <button type="button" class="tab-btn" data-section="secSettings">Einstellungen</button>
+    </div>
 
-      <div class="add-row">
-        <div>
-          <label>Von</label>
-          <div class="date-fields">
-            <select id="startDay"></select>
-            <select id="startMonth"></select>
-            <select id="startYear"></select>
-          </div>
-        </div>
-        <div>
-          <label>Bis</label>
-          <div class="date-fields">
-            <select id="endDay"></select>
-            <select id="endMonth"></select>
-            <select id="endYear"></select>
-          </div>
-        </div>
-        <div>
-          <label for="newName">Name (nur intern sichtbar)</label>
-          <input type="text" id="newName" placeholder="z.B. Familie Muster">
-        </div>
+    <!-- ===================== ZEITRÄUME (unverändert aus dem produktiven Admin) ===================== -->
+    <div class="section active" id="secRanges">
+      <p style="color:var(--walnut-2);">Hier siehst du alle aktuell belegten Zeiträume fürs Gwunderstübli. Namen sind nur hier sichtbar, nie auf der Website.</p>
 
-        <div>
-          <button type="button" class="cal-toggle" id="calToggle">📅 Kalender öffnen</button>
-          <div class="cal-panel" id="calPanel">
-            <div class="cal-panel-head">
-              <button type="button" id="cPrev">‹</button>
-              <span class="cal-panel-label" id="cLabel"></span>
-              <button type="button" id="cNext">›</button>
+      <div class="ranges-layout">
+        <div class="ranges-add-col card">
+          <h3>Neuer Zeitraum</h3>
+          <div class="add-row">
+            <div>
+              <label>Von</label>
+              <div class="date-fields">
+                <select id="startDay"></select>
+                <select id="startMonth"></select>
+                <select id="startYear"></select>
+              </div>
             </div>
-            <div class="cal-panel-grid" id="cGrid"></div>
-            <div class="cal-legend">
-              <span><span class="cdot booked"></span>Bereits belegt</span>
-              <span><span class="cdot picked"></span>Ausgewählt</span>
+            <div>
+              <label>Bis</label>
+              <div class="date-fields">
+                <select id="endDay"></select>
+                <select id="endMonth"></select>
+                <select id="endYear"></select>
+              </div>
             </div>
-            <p class="hint" id="cHint">Ersten Tag anklicken (Von), dann letzten Tag (Bis).</p>
+            <div>
+              <label for="newName">Name (nur intern sichtbar)</label>
+              <input type="text" id="newName" placeholder="z.B. Familie Muster">
+            </div>
+            <div>
+              <label for="newNote">Notiz (optional, nur intern sichtbar)</label>
+              <textarea id="newNote" placeholder="z.B. Anreise verspätet sich, Hund dabei, …"></textarea>
+            </div>
+
+            <div>
+              <button type="button" class="cal-toggle" id="calToggle">📅 Kalender öffnen</button>
+              <div class="cal-panel" id="calPanel">
+                <div class="cal-panel-head">
+                  <button type="button" id="cPrev">‹</button>
+                  <span class="cal-panel-label" id="cLabel"></span>
+                  <button type="button" id="cNext">›</button>
+                </div>
+                <div class="cal-panel-grid" id="cGrid"></div>
+                <div class="cal-legend">
+                  <span><span class="cdot booked"></span>Bereits belegt</span>
+                  <span><span class="cdot picked"></span>Ausgewählt</span>
+                </div>
+                <p class="hint" id="cHint">Ersten Tag anklicken (Von), dann letzten Tag (Bis).</p>
+              </div>
+            </div>
+
+            <button class="btn btn-secondary" id="addBtn">+ Hinzufügen</button>
           </div>
+
+          <div class="actions-row">
+            <button class="btn btn-primary" id="saveBtn">Speichern &amp; live schalten</button>
+          </div>
+          <p class="status" id="status"></p>
         </div>
 
-        <button class="btn btn-secondary" id="addBtn">+ Hinzufügen</button>
+        <div class="ranges-list-col">
+          <div class="card">
+            <h3>Aktuelle Zeiträume</h3>
+            <ul class="range-list" id="rangeList"></ul>
+          </div>
+
+          <details class="card archive">
+            <summary>Archiv – vergangene Zeiträume <span id="rangeArchiveCount"></span></summary>
+            <ul class="range-list" id="rangeArchiveList" style="margin-top:1rem;"></ul>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== ANFRAGEN ===================== -->
+    <div class="section" id="secRequests">
+      <p style="color:var(--walnut-2);">Offene Anfragen von Gästen. Beim Annehmen kannst du Preis und Zusatzkosten noch bestätigen oder anpassen.</p>
+      <div class="card">
+        <h3>Offene Anfragen</h3>
+        <ul class="item-list" id="pendingList"></ul>
+        <p class="status" id="requestsStatus"></p>
+      </div>
+      <div class="card">
+        <h3>Bereits entschieden</h3>
+        <ul class="item-list" id="decidedList"></ul>
+      </div>
+    </div>
+
+    <!-- ===================== AUFENTHALTE ===================== -->
+    <div class="section" id="secStays">
+      <p style="color:var(--walnut-2);">Bestätigte Aufenthalte mit Buchungsbestätigung &amp; Rechnung als ein Dokument.</p>
+      <div class="card">
+        <h3>Kommende Aufenthalte</h3>
+        <ul class="item-list" id="staysList"></ul>
+      </div>
+      <details class="card archive">
+        <summary>Archiv – vergangene Aufenthalte <span id="archiveCount"></span></summary>
+        <ul class="item-list" id="archiveList" style="margin-top:1rem;"></ul>
+      </details>
+    </div>
+
+    <!-- ===================== PREISE ===================== -->
+    <div class="section" id="secPricing">
+      <p style="color:var(--walnut-2);">Standardmässig wird wochenweise Samstag–Samstag vermietet. Eine Woche, die über den Winter/Sommer-Wechsel läuft, wird zu dem Preis der Saison verrechnet, in die mehr Nächte der Woche fallen.</p>
+      <div class="card">
+        <h3>Saisonpreise</h3>
+        <div class="field">
+          <label for="winterPrice">Winter (1.12.–31.3.) – Preis pro Woche (CHF)</label>
+          <input type="number" id="winterPrice" min="0" step="10">
+        </div>
+        <div class="field">
+          <label for="summerPrice">Sommer (1.4.–30.11.) – Preis pro Woche (CHF)</label>
+          <input type="number" id="summerPrice" min="0" step="10">
+        </div>
+        <div id="weekPriceList"></div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="savePricingBtn">Preise speichern</button>
+        </div>
+        <p class="status" id="pricingStatus"></p>
       </div>
 
-      <div class="actions-row">
-        <button class="btn btn-primary" id="saveBtn">Speichern &amp; live schalten</button>
-        <button class="logout" id="logoutBtn">Abmelden</button>
+      <div class="card">
+        <h3>Kurzaufenthalte (nur Referenz für Sonderfälle)</h3>
+        <p style="color:var(--walnut-2); font-size:0.9rem;">Nächte einzeln, nur auf kurzfristige Anfrage in Sonderfällen – wird bei einer Sonderanfrage im Annehmen-Formular automatisch als Preisvorschlag vorausgefüllt.</p>
+        <div id="shortStayTable"></div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="saveShortStayBtn">Kurzaufenthalt-Preise speichern</button>
+        </div>
+        <p class="status" id="shortStayStatus"></p>
       </div>
-      <p class="status" id="status"></p>
+    </div>
+
+    <!-- ===================== EINSTELLUNGEN ===================== -->
+    <div class="section" id="secSettings">
+      <p style="color:var(--walnut-2);">Diese Angaben erscheinen auf der Buchungsbestätigung &amp; Rechnung.</p>
+      <div class="card">
+        <div class="field"><label for="setCompanyName">Firmenname</label><input type="text" id="setCompanyName"></div>
+        <div class="field"><label for="setCompanyAddress">Adresse</label><textarea id="setCompanyAddress"></textarea></div>
+        <div class="field"><label for="setAccountHolder">Kontoinhaber</label><input type="text" id="setAccountHolder"></div>
+        <div class="field"><label for="setIban">IBAN</label><input type="text" id="setIban"></div>
+        <div class="field"><label for="setPaymentTerms">Zahlungsfrist (Tage)</label><input type="number" id="setPaymentTerms" min="0"></div>
+        <div class="field"><label for="setInvoicePrefix">Rechnungsnummer-Präfix</label><input type="text" id="setInvoicePrefix" placeholder="z.B. 2026-"></div>
+        <div class="field"><label for="setVat">MWST-Satz (%, 0 = keine)</label><input type="number" id="setVat" min="0" step="0.1"></div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="saveSettingsBtn">Einstellungen speichern</button>
+        </div>
+        <p class="status" id="settingsStatus"></p>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="logout" id="logoutBtn">Abmelden</button>
     </div>
   </div>
 
@@ -176,12 +328,43 @@
   const pwInput = document.getElementById('pw');
   const loginBtn = document.getElementById('loginBtn');
   const loginError = document.getElementById('loginError');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  let password = sessionStorage.getItem('gw_admin_pw') || '';
+
+  function authHeaders(extra) {
+    return { 'Authorization': 'Bearer ' + password, ...extra };
+  }
+  function showStatus(el, msg, ok) {
+    el.textContent = msg;
+    el.className = 'status ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+  }
+  function formatDateDisplay(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}.${m}.${y}`;
+  }
+
+  // --- Tabs ---
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.section).classList.add('active');
+    });
+  });
+
+  // =====================================================================
+  // ZEITRÄUME (identisch zur produktiven Logik)
+  // =====================================================================
   const rangeList = document.getElementById('rangeList');
   const addBtn = document.getElementById('addBtn');
   const saveBtn = document.getElementById('saveBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
   const statusEl = document.getElementById('status');
   const newName = document.getElementById('newName');
+  const newNote = document.getElementById('newNote');
   const startDay = document.getElementById('startDay');
   const startMonth = document.getElementById('startMonth');
   const startYear = document.getElementById('startYear');
@@ -189,29 +372,24 @@
   const endMonth = document.getElementById('endMonth');
   const endYear = document.getElementById('endYear');
 
-  const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-
   function fillDateSelects(daySel, monthSel, yearSel) {
     daySel.innerHTML = '';
     for (let d = 1; d <= 31; d++) {
       const opt = document.createElement('option');
-      opt.value = String(d).padStart(2, '0');
-      opt.textContent = d;
+      opt.value = String(d).padStart(2, '0'); opt.textContent = d;
       daySel.appendChild(opt);
     }
     monthSel.innerHTML = '';
     MONTHS.forEach((name, i) => {
       const opt = document.createElement('option');
-      opt.value = String(i + 1).padStart(2, '0');
-      opt.textContent = name;
+      opt.value = String(i + 1).padStart(2, '0'); opt.textContent = name;
       monthSel.appendChild(opt);
     });
     yearSel.innerHTML = '';
     const thisYear = new Date().getFullYear();
     for (let y = thisYear; y <= thisYear + 3; y++) {
       const opt = document.createElement('option');
-      opt.value = String(y);
-      opt.textContent = y;
+      opt.value = String(y); opt.textContent = y;
       yearSel.appendChild(opt);
     }
   }
@@ -221,123 +399,106 @@
   function selectsToDateStr(daySel, monthSel, yearSel) {
     return `${yearSel.value}-${monthSel.value}-${daySel.value}`;
   }
-
   function setSelects(daySel, monthSel, yearSel, dateStr) {
     const [y, m, d] = dateStr.split('-');
     yearSel.value = y; monthSel.value = m; daySel.value = d;
   }
-
   function isValidDate(dateStr) {
     const [y, m, d] = dateStr.split('-').map(Number);
     const dt = new Date(y, m - 1, d);
     return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
   }
 
-  function formatDateDisplay(dateStr) {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}.${m}.${y}`;
-  }
-
   let ranges = [];
-  let password = sessionStorage.getItem('gw_admin_pw') || '';
 
-  function showStatus(msg, ok) {
-    statusEl.textContent = msg;
-    statusEl.className = 'status ' + (ok ? 'ok' : 'err');
-    statusEl.style.display = 'block';
+  function buildRangeRow(r) {
+    const li = document.createElement('li');
+    const info = document.createElement('div');
+    info.className = 'range-info';
+    const label = document.createElement('span');
+    label.textContent = `${formatDateDisplay(r.start)} → ${formatDateDisplay(r.end)}`;
+    info.appendChild(label);
+    if (r.name) {
+      const nameEl = document.createElement('span');
+      nameEl.className = 'range-name';
+      nameEl.textContent = '👤 ' + r.name;
+      info.appendChild(nameEl);
+    }
+    if (r.note) {
+      const noteEl = document.createElement('span');
+      noteEl.className = 'range-note';
+      noteEl.textContent = '📝 ' + r.note;
+      info.appendChild(noteEl);
+    }
+    const noteBtn = document.createElement('button');
+    noteBtn.className = 'btn-small';
+    noteBtn.textContent = r.note ? 'Notiz bearbeiten' : '+ Notiz';
+    noteBtn.addEventListener('click', () => {
+      const updated = prompt('Notiz für diesen Zeitraum:', r.note || '');
+      if (updated === null) return;
+      r.note = updated.trim();
+      renderList();
+    });
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger';
+    delBtn.textContent = 'Entfernen';
+    delBtn.addEventListener('click', () => {
+      ranges = ranges.filter((x) => x !== r);
+      renderList();
+      renderCal();
+    });
+    const actions = document.createElement('div');
+    actions.className = 'item-actions';
+    actions.appendChild(noteBtn);
+    actions.appendChild(delBtn);
+    li.appendChild(info);
+    li.appendChild(actions);
+    return li;
   }
 
   function renderList() {
-    rangeList.innerHTML = '';
+    const todayStr = new Date().toISOString().slice(0, 10);
     const sorted = [...ranges].sort((a, b) => a.start.localeCompare(b.start));
-    sorted.forEach((r) => {
+    const upcoming = sorted.filter((r) => r.end >= todayStr);
+    const past = sorted.filter((r) => r.end < todayStr).reverse();
+
+    rangeList.innerHTML = '';
+    upcoming.forEach((r) => rangeList.appendChild(buildRangeRow(r)));
+    if (upcoming.length === 0) {
       const li = document.createElement('li');
-      const info = document.createElement('div');
-      info.className = 'range-info';
-      const label = document.createElement('span');
-      label.textContent = `${formatDateDisplay(r.start)} → ${formatDateDisplay(r.end)}`;
-      info.appendChild(label);
-      if (r.name) {
-        const nameEl = document.createElement('span');
-        nameEl.className = 'range-name';
-        nameEl.textContent = '👤 ' + r.name;
-        info.appendChild(nameEl);
-      }
-      const delBtn = document.createElement('button');
-      delBtn.className = 'btn btn-danger';
-      delBtn.textContent = 'Entfernen';
-      delBtn.addEventListener('click', () => {
-        ranges = ranges.filter((x) => x !== r);
-        renderList();
-        renderCal();
-      });
-      li.appendChild(info);
-      li.appendChild(delBtn);
+      li.textContent = 'Keine kommenden Zeiträume.';
       rangeList.appendChild(li);
-    });
-    if (sorted.length === 0) {
+    }
+
+    const rangeArchiveList = document.getElementById('rangeArchiveList');
+    const rangeArchiveCount = document.getElementById('rangeArchiveCount');
+    rangeArchiveCount.textContent = `(${past.length})`;
+    rangeArchiveList.innerHTML = '';
+    past.forEach((r) => rangeArchiveList.appendChild(buildRangeRow(r)));
+    if (past.length === 0) {
       const li = document.createElement('li');
-      li.textContent = 'Keine belegten Zeiträume.';
-      rangeList.appendChild(li);
+      li.textContent = 'Keine vergangenen Zeiträume.';
+      rangeArchiveList.appendChild(li);
     }
   }
 
   async function loadRanges() {
-    const res = await fetch(API + '/api/bookings/full', {
-      headers: { 'Authorization': 'Bearer ' + password },
-    });
+    const res = await fetch(API + '/api/bookings/full', { headers: authHeaders() });
     ranges = await res.json();
     renderList();
     renderCal();
   }
 
-  async function login() {
-    loginError.style.display = 'none';
-    loginBtn.disabled = true;
-    try {
-      const res = await fetch(API + '/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pwInput.value }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        password = pwInput.value;
-        sessionStorage.setItem('gw_admin_pw', password);
-        loginView.style.display = 'none';
-        adminView.style.display = 'block';
-        await loadRanges();
-      } else {
-        loginError.style.display = 'block';
-      }
-    } catch (e) {
-      loginError.textContent = 'Verbindungsfehler, bitte später erneut versuchen.';
-      loginError.style.display = 'block';
-    } finally {
-      loginBtn.disabled = false;
-    }
-  }
-
-  loginBtn.addEventListener('click', login);
-  pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
-
   addBtn.addEventListener('click', () => {
     const start = selectsToDateStr(startDay, startMonth, startYear);
     const end = selectsToDateStr(endDay, endMonth, endYear);
-
-    if (!isValidDate(start) || !isValidDate(end)) {
-      showStatus('Ungültiges Datum (z.B. gibt es keinen 30. Februar).', false);
-      return;
-    }
-    if (start > end) {
-      showStatus('Das Startdatum muss vor dem Enddatum liegen.', false);
-      return;
-    }
-    ranges.push({ start, end, name: newName.value.trim() });
+    if (!isValidDate(start) || !isValidDate(end)) { showStatus(statusEl, 'Ungültiges Datum.', false); return; }
+    if (start > end) { showStatus(statusEl, 'Das Startdatum muss vor dem Enddatum liegen.', false); return; }
+    ranges.push({ start, end, name: newName.value.trim(), note: newNote.value.trim() });
     newName.value = '';
+    newNote.value = '';
     pickStart = null; pickEnd = null;
-    renderList();
-    renderCal();
+    renderList(); renderCal();
     statusEl.style.display = 'none';
   });
 
@@ -346,36 +507,19 @@
     try {
       const res = await fetch(API + '/api/bookings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + password },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(ranges),
       });
-      if (res.ok) {
-        showStatus('Gespeichert – die Website zeigt die neue Belegung sofort an.', true);
-      } else {
-        showStatus('Fehler beim Speichern. Bitte erneut versuchen.', false);
-      }
+      if (res.ok) showStatus(statusEl, 'Gespeichert – die Testseite zeigt die neue Belegung sofort an.', true);
+      else showStatus(statusEl, 'Fehler beim Speichern.', false);
     } catch (e) {
-      showStatus('Verbindungsfehler beim Speichern.', false);
+      showStatus(statusEl, 'Verbindungsfehler beim Speichern.', false);
     } finally {
       saveBtn.disabled = false;
     }
   });
 
-  logoutBtn.addEventListener('click', () => {
-    sessionStorage.removeItem('gw_admin_pw');
-    password = '';
-    adminView.style.display = 'none';
-    loginView.style.display = 'block';
-    pwInput.value = '';
-  });
-
-  if (password) {
-    loginView.style.display = 'none';
-    adminView.style.display = 'block';
-    loadRanges();
-  }
-
-  // --- Kalender-Picker ---
+  // Kalender-Picker (Zeiträume)
   const calToggle = document.getElementById('calToggle');
   const calPanel = document.getElementById('calPanel');
   const cPrev = document.getElementById('cPrev');
@@ -383,38 +527,25 @@
   const cLabel = document.getElementById('cLabel');
   const cGrid = document.getElementById('cGrid');
   const cHint = document.getElementById('cHint');
-
   const today = new Date();
   let cYear = today.getFullYear();
   let cMonth = today.getMonth();
   let pickStart = null;
   let pickEnd = null;
 
-  calToggle.addEventListener('click', () => {
-    calPanel.classList.toggle('open');
-  });
-
-  function isBookedDate(dateStr) {
-    return ranges.some(r => dateStr >= r.start && dateStr <= r.end);
-  }
+  calToggle.addEventListener('click', () => calPanel.classList.toggle('open'));
+  function isBookedDate(dateStr) { return ranges.some(r => dateStr >= r.start && dateStr <= r.end); }
 
   function renderCal() {
     cLabel.textContent = MONTHS[cMonth] + ' ' + cYear;
     cGrid.innerHTML = '';
     ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(d => {
-      const el = document.createElement('div');
-      el.className = 'dow';
-      el.textContent = d;
-      cGrid.appendChild(el);
+      const el = document.createElement('div'); el.className = 'dow'; el.textContent = d; cGrid.appendChild(el);
     });
-
     const firstWeekday = (new Date(cYear, cMonth, 1).getDay() + 6) % 7;
     const daysInMonth = new Date(cYear, cMonth + 1, 0).getDate();
-
     for (let i = 0; i < firstWeekday; i++) {
-      const el = document.createElement('div');
-      el.className = 'cday empty';
-      cGrid.appendChild(el);
+      const el = document.createElement('div'); el.className = 'cday empty'; cGrid.appendChild(el);
     }
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${cYear}-${String(cMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -426,17 +557,13 @@
       if (pickEnd && dateStr === pickEnd) cls += ' picked-end';
       if (pickStart && pickEnd && dateStr > pickStart && dateStr < pickEnd) cls += ' in-range';
       el.className = cls;
-      if (!booked) {
-        el.addEventListener('click', () => onDayClick(dateStr));
-      }
+      if (!booked) el.addEventListener('click', () => onDayClick(dateStr));
       cGrid.appendChild(el);
     }
   }
-
   function onDayClick(dateStr) {
     if (!pickStart || (pickStart && pickEnd)) {
-      pickStart = dateStr;
-      pickEnd = null;
+      pickStart = dateStr; pickEnd = null;
       cHint.textContent = 'Jetzt letzten Tag anklicken (Bis).';
     } else if (dateStr < pickStart) {
       pickStart = dateStr;
@@ -449,17 +576,379 @@
     }
     renderCal();
   }
+  cPrev.addEventListener('click', () => { cMonth--; if (cMonth < 0) { cMonth = 11; cYear--; } renderCal(); });
+  cNext.addEventListener('click', () => { cMonth++; if (cMonth > 11) { cMonth = 0; cYear++; } renderCal(); });
 
-  cPrev.addEventListener('click', () => {
-    cMonth--; if (cMonth < 0) { cMonth = 11; cYear--; }
-    renderCal();
-  });
-  cNext.addEventListener('click', () => {
-    cMonth++; if (cMonth > 11) { cMonth = 0; cYear++; }
-    renderCal();
+  // =====================================================================
+  // ANFRAGEN & AUFENTHALTE
+  // =====================================================================
+  const pendingList = document.getElementById('pendingList');
+  const decidedList = document.getElementById('decidedList');
+  const staysList = document.getElementById('staysList');
+  const requestsStatus = document.getElementById('requestsStatus');
+  let stays = [];
+
+  async function loadStays() {
+    const res = await fetch(API + '/api/stays/full', { headers: authHeaders() });
+    stays = await res.json();
+    renderStays();
+  }
+
+  async function openPdf(id) {
+    // Open the tab synchronously (still inside the click gesture) so browsers
+    // don't treat it as a blocked popup once we fill it in after the fetch.
+    const tab = window.open('', '_blank');
+    try {
+      let res = await fetch(`${API}/api/stays/${id}/document.pdf`, { headers: authHeaders() });
+      if (res.status === 404) {
+        // Stay was confirmed before the current document format existed — build it now.
+        await fetch(`${API}/api/stays/${id}/regenerate`, { method: 'POST', headers: authHeaders() });
+        res = await fetch(`${API}/api/stays/${id}/document.pdf`, { headers: authHeaders() });
+      }
+      if (!res.ok) { if (tab) tab.close(); alert('PDF konnte nicht geladen werden.'); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      if (tab) tab.location.href = url;
+      else window.open(url, '_blank');
+    } catch (e) {
+      if (tab) tab.close();
+      alert('Verbindungsfehler beim Laden des PDFs.');
+    }
+  }
+
+  function renderStays() {
+    const pending = stays.filter(s => s.status === 'pending').sort((a,b) => a.createdAt.localeCompare(b.createdAt));
+    const decided = stays.filter(s => s.status !== 'pending' && s.status !== 'confirmed').sort((a,b) => (b.decidedAt||'').localeCompare(a.decidedAt||''));
+    const confirmed = stays.filter(s => s.status === 'confirmed').sort((a,b) => a.arrival.localeCompare(b.arrival));
+
+    document.getElementById('pendingCount').textContent = pending.length ? `(${pending.length})` : '';
+
+    pendingList.innerHTML = '';
+    pending.forEach((s) => {
+      const li = document.createElement('li');
+      const info = document.createElement('div');
+      info.className = 'item-info';
+      info.innerHTML = `
+        <strong>${s.guestName}</strong>
+        <span class="item-meta">${formatDateDisplay(s.arrival)} – ${formatDateDisplay(s.departure)} · ${s.numPeople} Pers. ${s.isCustomRequest ? '· <span class="badge requested">Sonderanfrage</span>' : ''}</span>
+        <span class="item-meta">${s.email} · ${s.address}</span>
+        ${s.message ? `<span class="item-meta">„${s.message}"</span>` : ''}
+        <span class="item-meta">${s.total !== null ? `Berechneter Preis: CHF ${s.total}.–` : 'Preis noch offen'}</span>
+      `;
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+      const approveBtn = document.createElement('button');
+      approveBtn.className = 'btn-ok'; approveBtn.textContent = 'Annehmen';
+      const rejectBtn = document.createElement('button');
+      rejectBtn.className = 'btn-danger'; rejectBtn.textContent = 'Ablehnen';
+
+      let suggestedPrice = s.total;
+      let suggestionNote = '';
+      if (s.total === null) {
+        const nights = Math.round((new Date(s.departure) - new Date(s.arrival)) / 86400000);
+        if (nights >= 1 && nights <= 6) {
+          const season = isWinterMonth(s.arrival) ? 'winter' : 'summer';
+          const table = weekPricing.shortStay && weekPricing.shortStay[season];
+          if (table && table[nights - 1] !== undefined) {
+            suggestedPrice = table[nights - 1];
+            suggestionNote = `<p class="hint">Vorschlag aus Kurzaufenthalt-Tabelle (${nights} ${nights === 1 ? 'Nacht' : 'Nächte'}, ${season === 'winter' ? 'Winter' : 'Sommer'}) – kann angepasst werden.</p>`;
+          }
+        }
+      }
+
+      const form = document.createElement('div');
+      form.className = 'approve-form';
+      form.innerHTML = `
+        <div class="field">
+          <label>Preis Aufenthalt (CHF)</label>
+          <input type="number" class="approvePrice" value="${suggestedPrice ?? ''}" min="0" step="10">
+          ${suggestionNote}
+        </div>
+        <div class="extraCostsWrap"></div>
+        <button type="button" class="btn-small addExtraCost">+ Zusatzkosten</button>
+        <div style="margin-top:0.8rem;">
+          <button type="button" class="btn btn-primary confirmApprove">Bestätigen &amp; Rechnung erstellen</button>
+        </div>
+      `;
+      const extraWrap = form.querySelector('.extraCostsWrap');
+      function addExtraRow(label = '', amount = '') {
+        const row = document.createElement('div');
+        row.className = 'extra-cost-row';
+        row.innerHTML = `<input type="text" placeholder="Bezeichnung" class="ecLabel" value="${label}">
+          <input type="number" placeholder="CHF" class="ecAmount" value="${amount}">
+          <button type="button" class="btn-small ecRemove">×</button>`;
+        row.querySelector('.ecRemove').addEventListener('click', () => row.remove());
+        extraWrap.appendChild(row);
+      }
+      form.querySelector('.addExtraCost').addEventListener('click', () => addExtraRow());
+
+      approveBtn.addEventListener('click', () => form.classList.toggle('open'));
+      rejectBtn.addEventListener('click', async () => {
+        if (!confirm('Diese Anfrage wirklich ablehnen?')) return;
+        await fetch(`${API}/api/stays/${s.id}/decision`, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ action: 'reject' }),
+        });
+        showStatus(requestsStatus, 'Anfrage abgelehnt.', true);
+        await loadStays();
+      });
+      form.querySelector('.confirmApprove').addEventListener('click', async () => {
+        const weeklyPrice = parseFloat(form.querySelector('.approvePrice').value);
+        if (isNaN(weeklyPrice) || weeklyPrice < 0) { showStatus(requestsStatus, 'Bitte einen gültigen Preis angeben.', false); return; }
+        const extraCosts = [...extraWrap.querySelectorAll('.extra-cost-row')].map(row => ({
+          label: row.querySelector('.ecLabel').value.trim(),
+          amount: parseFloat(row.querySelector('.ecAmount').value) || 0,
+        })).filter(c => c.label);
+        const res = await fetch(`${API}/api/stays/${s.id}/decision`, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ action: 'approve', weeklyPrice, extraCosts }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showStatus(requestsStatus, `Angenommen – Rechnung ${data.invoiceNumber} erstellt.`, true);
+          await loadStays();
+        } else {
+          showStatus(requestsStatus, data.error || 'Fehler beim Bestätigen.', false);
+        }
+      });
+
+      actions.appendChild(approveBtn);
+      actions.appendChild(rejectBtn);
+      li.appendChild(info);
+      li.appendChild(actions);
+      li.appendChild(form);
+      pendingList.appendChild(li);
+    });
+    if (pending.length === 0) pendingList.innerHTML = '<li>Keine offenen Anfragen.</li>';
+
+    decidedList.innerHTML = '';
+    decided.forEach((s) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<div class="item-info"><strong>${s.guestName}</strong>
+        <span class="item-meta">${formatDateDisplay(s.arrival)} – ${formatDateDisplay(s.departure)}</span></div>
+        <span class="badge ${s.status}">${s.status === 'rejected' ? 'Abgelehnt' : s.status}</span>`;
+      decidedList.appendChild(li);
+    });
+    if (decided.length === 0) decidedList.innerHTML = '<li>Noch keine abgelehnten Anfragen.</li>';
+
+    function buildStayRow(s) {
+      const li = document.createElement('li');
+      const info = document.createElement('div');
+      info.className = 'item-info';
+      info.innerHTML = `<strong>${s.guestName}</strong>
+        <span class="item-meta">${formatDateDisplay(s.arrival)} – ${formatDateDisplay(s.departure)} · ${s.numPeople} Pers.</span>
+        <span class="item-meta">Rechnung ${s.invoiceNumber} · Total CHF ${s.total}.–</span>`;
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+      const docBtn = document.createElement('button');
+      docBtn.className = 'btn-small'; docBtn.textContent = '📄 Dokument';
+      docBtn.addEventListener('click', () => openPdf(s.id));
+      actions.appendChild(docBtn);
+      li.appendChild(info);
+      li.appendChild(actions);
+      return li;
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const upcoming = confirmed.filter(s => s.departure >= todayStr);
+    const past = confirmed.filter(s => s.departure < todayStr).sort((a, b) => b.arrival.localeCompare(a.arrival));
+
+    staysList.innerHTML = '';
+    upcoming.forEach((s) => staysList.appendChild(buildStayRow(s)));
+    if (upcoming.length === 0) staysList.innerHTML = '<li>Keine kommenden Aufenthalte.</li>';
+
+    const archiveList = document.getElementById('archiveList');
+    const archiveCount = document.getElementById('archiveCount');
+    archiveCount.textContent = past.length ? `(${past.length})` : '(0)';
+    archiveList.innerHTML = '';
+    past.forEach((s) => archiveList.appendChild(buildStayRow(s)));
+    if (past.length === 0) archiveList.innerHTML = '<li>Noch keine vergangenen Aufenthalte.</li>';
+  }
+
+  // =====================================================================
+  // PREISE
+  // =====================================================================
+  const winterPriceInput = document.getElementById('winterPrice');
+  const summerPriceInput = document.getElementById('summerPrice');
+  const weekPriceList = document.getElementById('weekPriceList');
+  const pricingStatus = document.getElementById('pricingStatus');
+  const shortStayTable = document.getElementById('shortStayTable');
+  const shortStayStatus = document.getElementById('shortStayStatus');
+  let weekPricing = { winterPrice: 750, summerPrice: 650, overrides: {}, shortStay: { winter: [], summer: [] } };
+  let upcomingWeeks = [];
+
+  function isWinterMonth(dateStr) {
+    const month = parseInt(dateStr.split('-')[1], 10);
+    return month === 12 || month === 1 || month === 2 || month === 3;
+  }
+
+  async function loadPricing() {
+    const [pRes, wRes] = await Promise.all([
+      fetch(API + '/api/weekpricing', { headers: authHeaders() }),
+      fetch(API + '/api/weeks?weeks=26'),
+    ]);
+    weekPricing = await pRes.json();
+    upcomingWeeks = await wRes.json();
+    winterPriceInput.value = weekPricing.winterPrice;
+    summerPriceInput.value = weekPricing.summerPrice;
+    renderWeekPricing();
+    renderShortStayTable();
+    renderStays(); // re-render so custom-request price suggestions use fresh pricing data
+  }
+
+  function renderWeekPricing() {
+    weekPriceList.innerHTML = '';
+    upcomingWeeks.forEach((w) => {
+      const row = document.createElement('div');
+      row.className = 'price-week-row';
+      const override = weekPricing.overrides[w.start];
+      const seasonDefault = isWinterMonth(w.start) && isWinterMonth(w.end) ? weekPricing.winterPrice
+        : (!isWinterMonth(w.start) && !isWinterMonth(w.end)) ? weekPricing.summerPrice : w.price;
+      row.innerHTML = `<span>${formatDateDisplay(w.start)} – ${formatDateDisplay(w.end)} <span class="badge ${w.status}">${w.status === 'free' ? 'Frei' : (w.status === 'requested' ? 'Angefragt' : 'Belegt')}</span></span>
+        <input type="number" min="0" step="10" placeholder="${seasonDefault}" value="${override !== undefined ? override : ''}" data-week="${w.start}">`;
+      weekPriceList.appendChild(row);
+    });
+  }
+
+  function renderShortStayTable() {
+    shortStayTable.innerHTML = '';
+    const header = document.createElement('div');
+    header.className = 'price-week-row';
+    header.innerHTML = `<span><strong>Nächte</strong></span><span style="display:flex; gap:1rem;"><strong style="width:100px; display:inline-block;">Winter</strong><strong style="width:100px; display:inline-block;">Sommer</strong></span>`;
+    shortStayTable.appendChild(header);
+    for (let i = 0; i < 6; i++) {
+      const row = document.createElement('div');
+      row.className = 'price-week-row';
+      row.innerHTML = `<span>${i + 1} ${i === 0 ? 'Nacht' : 'Nächte'}</span>
+        <span style="display:flex; gap:1rem;">
+          <input type="number" min="0" step="5" value="${weekPricing.shortStay.winter[i] ?? ''}" data-short="winter-${i}" style="width:100px;">
+          <input type="number" min="0" step="5" value="${weekPricing.shortStay.summer[i] ?? ''}" data-short="summer-${i}" style="width:100px;">
+        </span>`;
+      shortStayTable.appendChild(row);
+    }
+  }
+
+  document.getElementById('savePricingBtn').addEventListener('click', async () => {
+    const winterPrice = parseFloat(winterPriceInput.value);
+    const summerPrice = parseFloat(summerPriceInput.value);
+    if (isNaN(winterPrice) || winterPrice < 0 || isNaN(summerPrice) || summerPrice < 0) {
+      showStatus(pricingStatus, 'Bitte gültige Preise für Winter und Sommer angeben.', false); return;
+    }
+    const overrides = {};
+    weekPriceList.querySelectorAll('input[data-week]').forEach((input) => {
+      if (input.value !== '') overrides[input.dataset.week] = parseFloat(input.value);
+    });
+    const res = await fetch(API + '/api/weekpricing', {
+      method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ winterPrice, summerPrice, overrides, shortStay: weekPricing.shortStay }),
+    });
+    if (res.ok) { showStatus(pricingStatus, 'Preise gespeichert.', true); await loadPricing(); }
+    else showStatus(pricingStatus, 'Fehler beim Speichern.', false);
   });
 
-  renderCal();
+  document.getElementById('saveShortStayBtn').addEventListener('click', async () => {
+    const winter = [], summer = [];
+    for (let i = 0; i < 6; i++) {
+      winter.push(parseFloat(shortStayTable.querySelector(`[data-short="winter-${i}"]`).value) || 0);
+      summer.push(parseFloat(shortStayTable.querySelector(`[data-short="summer-${i}"]`).value) || 0);
+    }
+    const res = await fetch(API + '/api/weekpricing', {
+      method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        winterPrice: weekPricing.winterPrice,
+        summerPrice: weekPricing.summerPrice,
+        overrides: weekPricing.overrides,
+        shortStay: { winter, summer },
+      }),
+    });
+    if (res.ok) { showStatus(shortStayStatus, 'Kurzaufenthalt-Preise gespeichert.', true); await loadPricing(); }
+    else showStatus(shortStayStatus, 'Fehler beim Speichern.', false);
+  });
+
+  // =====================================================================
+  // EINSTELLUNGEN
+  // =====================================================================
+  const settingsStatus = document.getElementById('settingsStatus');
+
+  async function loadSettings() {
+    const res = await fetch(API + '/api/settings', { headers: authHeaders() });
+    const s = await res.json();
+    document.getElementById('setCompanyName').value = s.companyName || '';
+    document.getElementById('setCompanyAddress').value = s.companyAddress || '';
+    document.getElementById('setAccountHolder').value = s.accountHolder || '';
+    document.getElementById('setIban').value = s.iban || '';
+    document.getElementById('setPaymentTerms').value = s.paymentTermsDays ?? 14;
+    document.getElementById('setInvoicePrefix').value = s.invoicePrefix || '';
+    document.getElementById('setVat').value = s.vatRate ?? 0;
+  }
+
+  document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+    const payload = {
+      companyName: document.getElementById('setCompanyName').value.trim(),
+      companyAddress: document.getElementById('setCompanyAddress').value.trim(),
+      accountHolder: document.getElementById('setAccountHolder').value.trim(),
+      iban: document.getElementById('setIban').value.trim(),
+      paymentTermsDays: parseInt(document.getElementById('setPaymentTerms').value, 10) || 0,
+      invoicePrefix: document.getElementById('setInvoicePrefix').value.trim(),
+      vatRate: parseFloat(document.getElementById('setVat').value) || 0,
+      currency: 'CHF',
+    };
+    const res = await fetch(API + '/api/settings', {
+      method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) showStatus(settingsStatus, 'Einstellungen gespeichert.', true);
+    else showStatus(settingsStatus, 'Fehler beim Speichern.', false);
+  });
+
+  // =====================================================================
+  // LOGIN
+  // =====================================================================
+  async function login() {
+    loginError.style.display = 'none';
+    loginBtn.disabled = true;
+    try {
+      const res = await fetch(API + '/api/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwInput.value }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        password = pwInput.value;
+        sessionStorage.setItem('gw_admin_pw', password);
+        loginView.style.display = 'none';
+        adminView.style.display = 'block';
+        await bootstrap();
+      } else {
+        loginError.style.display = 'block';
+      }
+    } catch (e) {
+      loginError.textContent = 'Verbindungsfehler, bitte später erneut versuchen.';
+      loginError.style.display = 'block';
+    } finally {
+      loginBtn.disabled = false;
+    }
+  }
+  loginBtn.addEventListener('click', login);
+  pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+
+  logoutBtn.addEventListener('click', () => {
+    sessionStorage.removeItem('gw_admin_pw');
+    password = '';
+    adminView.style.display = 'none';
+    loginView.style.display = 'block';
+    pwInput.value = '';
+  });
+
+  async function bootstrap() {
+    await Promise.all([loadRanges(), loadStays(), loadPricing(), loadSettings()]);
+  }
+
+  if (password) {
+    loginView.style.display = 'none';
+    adminView.style.display = 'block';
+    bootstrap();
+  }
 </script>
 
 </body>

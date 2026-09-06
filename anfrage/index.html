@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aufenthalt anfragen – Gwunderstübli</title>
+<meta name="description" content="Aufenthalt im Gwunderstübli an der Lenk anfragen – Wochen wählen, Preis sofort sehen.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#f6f1e7; --cream-2:#efe6d4; --walnut:#3d2b20; --walnut-2:#5a4230;
+    --bark:#2c1f17; --moss:#5b6f4f; --moss-dark:#465a3a; --gold:#b8863f; --gold-light:#e3b968;
+    --text:#3a2f26; --radius:16px; --shadow:0 10px 30px rgba(44,31,23,0.15);
+    --ease: cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Nunito Sans', sans-serif; color:var(--text); background:var(--cream); line-height:1.6;}
+  h1,h2,h3{font-family:'Playfair Display', serif; color:var(--bark); line-height:1.2; margin:0 0 0.4rem;}
+  .brand{font-family:'Poppins', sans-serif; font-weight:600; font-size:1.1rem; padding:1.2rem 1.5rem; border-bottom:1px solid rgba(61,43,32,0.08);}
+  .brand span{color:var(--moss);}
+  .brand a{color:inherit; text-decoration:none;}
+  .wrap{max-width:680px; margin:0 auto; padding:2.5rem 1.5rem 4rem;}
+
+  .card{background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:2rem; margin-top:1.5rem;}
+  label{display:block; font-weight:700; font-size:0.85rem; margin-bottom:0.4rem; color:var(--walnut-2);}
+  input[type="text"], input[type="email"], input[type="number"], textarea, select{
+    width:100%; padding:0.75rem 1rem; border-radius:10px; border:1px solid var(--cream-2);
+    background:var(--cream); font-size:1rem; font-family:inherit; color:var(--text);
+  }
+  textarea{resize:vertical; min-height:80px;}
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  .field{margin-bottom:1.1rem;}
+  .included-note{display:inline-block; background:#eef1e9; color:var(--moss-dark); font-weight:700; font-size:0.88rem; padding:0.55rem 1rem; border-radius:20px; margin:0 0 1rem;}
+  .cancel-table{width:100%; border-collapse:collapse;}
+  .cancel-table th, .cancel-table td{text-align:left; padding:0.6rem 0.4rem; border-bottom:1px solid var(--cream-2); font-size:0.9rem;}
+  .cancel-table th{color:var(--walnut-2); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;}
+  .cancel-table td:last-child, .cancel-table th:last-child{text-align:right; font-weight:700; color:var(--bark);}
+  .honeypot{position:absolute; left:-9999px; opacity:0;}
+
+  .tabs{display:flex; gap:0.6rem; margin-top:1.5rem;}
+  .tab-btn{flex:1; padding:0.8rem; border-radius:12px; border:1px solid var(--cream-2); background:#fff; cursor:pointer; font-weight:700; font-family:inherit; color:var(--walnut-2); transition:all .2s ease;}
+
+  .people-toggle{display:flex; gap:0.6rem;}
+  .people-option{flex:1; display:flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.75rem; border-radius:10px; border:1px solid var(--cream-2); background:var(--cream); cursor:pointer; font-weight:700; color:var(--walnut-2); transition:all .2s ease;}
+  .people-option input{width:auto; margin:0;}
+  .people-option.selected{background:var(--bark); color:#fff; border-color:var(--bark);}
+  .tab-btn.active{background:var(--bark); color:#fff; border-color:var(--bark);}
+
+  .week-list{max-height:360px; overflow-y:auto; border:1px solid var(--cream-2); border-radius:12px;}
+  .week-row{display:flex; align-items:center; justify-content:space-between; padding:0.8rem 1rem; border-bottom:1px solid var(--cream-2); font-size:0.92rem;}
+  .week-row:last-child{border-bottom:none;}
+  .week-row.free{cursor:pointer;}
+  .week-row.free:hover{background:var(--cream);}
+  .week-row.selected{background:#eef1e9;}
+  .week-row.disabled{color:#bbb; cursor:not-allowed;}
+  .badge{font-size:0.72rem; font-weight:800; padding:0.2rem 0.6rem; border-radius:20px;}
+  .badge.free{background:#eef1e9; color:var(--moss-dark);}
+  .badge.booked, .badge.requested{background:#f5e0d6; color:#a34a35;}
+
+  .stepper{display:flex; align-items:center; gap:0.8rem; margin-top:1rem;}
+  .stepper button{width:36px; height:36px; border-radius:50%; border:1px solid var(--cream-2); background:#fff; font-size:1.1rem; cursor:pointer;}
+  .stepper button:hover{background:var(--cream-2);}
+
+  .price-box{background:var(--cream-2); border-radius:12px; padding:1rem 1.2rem; margin-top:1rem; display:flex; justify-content:space-between; align-items:center;}
+  .price-box .amount{font-family:'Playfair Display', serif; font-size:1.5rem; color:var(--gold);}
+
+  .date-fields{display:grid; grid-template-columns:70px 1fr 90px; gap:0.5rem;}
+
+  .btn{
+    display:inline-block; padding:0.9rem 1.8rem; border-radius:30px; border:none; cursor:pointer;
+    font-weight:800; font-size:0.95rem; font-family:inherit;
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease);
+  }
+  .btn-primary{background:linear-gradient(135deg, var(--gold-light), var(--gold)); color:#2c1f17;}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(184,134,63,0.4);}
+  .btn-primary:disabled{opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none;}
+
+  .status{margin-top:1rem; font-weight:700; font-size:0.92rem; display:none;}
+  .status.ok{color:var(--moss-dark);}
+  .status.err{color:#a34a35;}
+
+  #successView{display:none; text-align:center;}
+  #successView .card{padding:3rem 2rem;}
+</style>
+</head>
+<body>
+
+<div class="brand"><a href="../">Gwunder<span>stübli</span> &amp; Gwunder<span>stube</span></a></div>
+
+<div class="wrap">
+  <div id="formView">
+    <h1>Aufenthalt anfragen</h1>
+    <p style="color:var(--walnut-2);">Wähle eine oder mehrere freie Wochen (jeweils Samstag bis Samstag) oder stelle eine Sonderanfrage für andere Daten.</p>
+    <p class="included-note">✓ Im Preis inbegriffen: Gästekarte, Bettwäsche und Reinigung.</p>
+
+    <div class="tabs">
+      <button type="button" class="tab-btn active" id="tabWeek">Woche(n) buchen</button>
+      <button type="button" class="tab-btn" id="tabCustom">Sonderanfrage</button>
+    </div>
+
+    <div class="card" id="weekPanel">
+      <h3>Verfügbare Wochen</h3>
+      <div class="week-list" id="weekList"><p style="padding:1rem;">Lade Verfügbarkeit…</p></div>
+      <div class="stepper">
+        <label style="margin:0;">Anzahl Wochen:</label>
+        <button type="button" id="weeksMinus">–</button>
+        <span id="weeksCount">1</span>
+        <button type="button" id="weeksPlus">+</button>
+      </div>
+      <div class="price-box" id="priceBox" style="display:none;">
+        <span>Voraussichtlicher Preis</span>
+        <span class="amount" id="priceAmount"></span>
+      </div>
+    </div>
+
+    <div class="card" id="customPanel" style="display:none;">
+      <h3>Gewünschter Zeitraum</h3>
+      <p style="color:var(--walnut-2); font-size:0.9rem;">Für individuelle Zeiträume gibt es noch keinen automatischen Preis – wir melden uns mit einem Angebot.</p>
+      <div class="field">
+        <label>Anreise</label>
+        <div class="date-fields">
+          <select id="cArrDay"></select><select id="cArrMonth"></select><select id="cArrYear"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Abreise</label>
+        <div class="date-fields">
+          <select id="cDepDay"></select><select id="cDepMonth"></select><select id="cDepYear"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Stornierungsbedingungen</h3>
+      <table class="cancel-table">
+        <tr><th>Stornierung vor Anreise</th><th>Geschuldeter Anteil</th></tr>
+        <tr><td>Mehr als 3 Monate (90 Tage)</td><td>kostenlos</td></tr>
+        <tr><td>30–90 Tage</td><td>50%</td></tr>
+        <tr><td>Weniger als 30 Tage</td><td>100%</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Deine Angaben</h3>
+      <div class="field"><label for="guestName">Name</label><input type="text" id="guestName"></div>
+      <div class="field"><label for="address">Adresse</label><textarea id="address" placeholder="Strasse, PLZ, Ort"></textarea></div>
+      <div class="field"><label for="email">E-Mail</label><input type="email" id="email"></div>
+      <div class="field">
+        <label>Anzahl Personen</label>
+        <div class="people-toggle">
+          <label class="people-option"><input type="radio" name="numPeople" value="1"> 1 Person</label>
+          <label class="people-option selected"><input type="radio" name="numPeople" value="2" checked> 2 Personen</label>
+        </div>
+      </div>
+      <div class="field"><label for="message">Nachricht (optional)</label><textarea id="message"></textarea></div>
+      <input type="text" class="honeypot" id="website" tabindex="-1" autocomplete="off">
+
+      <div class="field" style="display:flex; align-items:flex-start; gap:0.6rem;">
+        <input type="checkbox" id="agbAccepted" style="width:auto; margin-top:0.2rem;">
+        <label for="agbAccepted" style="margin:0; font-weight:400; color:var(--text);">
+          Mit dem Absenden bestätige ich verbindlich den gewünschten Zeitraum und akzeptiere die
+          <a href="../agb/" target="_blank" style="color:var(--gold); font-weight:700;">AGB</a>.
+        </label>
+      </div>
+
+      <button class="btn btn-primary" id="submitBtn">Anfrage senden</button>
+      <p class="status" id="status"></p>
+    </div>
+  </div>
+
+  <div id="successView">
+    <div class="card">
+      <h2>Danke für deine Anfrage!</h2>
+      <p style="color:var(--walnut-2);">Wir melden uns baldmöglichst bei dir, ob der gewünschte Aufenthalt bestätigt werden kann.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'https://gwunderstube-bookings.tobias-mahrer.workers.dev';
+  const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  const tabWeek = document.getElementById('tabWeek');
+  const tabCustom = document.getElementById('tabCustom');
+  const weekPanel = document.getElementById('weekPanel');
+  const customPanel = document.getElementById('customPanel');
+  let mode = 'week';
+
+  document.querySelectorAll('.people-option input').forEach((input) => {
+    input.addEventListener('change', () => {
+      document.querySelectorAll('.people-option').forEach((opt) => opt.classList.remove('selected'));
+      input.closest('.people-option').classList.add('selected');
+    });
+  });
+
+  tabWeek.addEventListener('click', () => { mode = 'week'; tabWeek.classList.add('active'); tabCustom.classList.remove('active'); weekPanel.style.display='block'; customPanel.style.display='none'; });
+  tabCustom.addEventListener('click', () => { mode = 'custom'; tabCustom.classList.add('active'); tabWeek.classList.remove('active'); weekPanel.style.display='none'; customPanel.style.display='block'; });
+
+  function fmtDate(dateStr) {
+    const [y,m,d] = dateStr.split('-');
+    return `${d}.${m}.${y}`;
+  }
+
+  function fillDateSelects(daySel, monthSel, yearSel) {
+    daySel.innerHTML = '';
+    for (let d = 1; d <= 31; d++) {
+      const opt = document.createElement('option'); opt.value = String(d).padStart(2,'0'); opt.textContent = d; daySel.appendChild(opt);
+    }
+    monthSel.innerHTML = '';
+    MONTHS.forEach((name,i) => { const opt = document.createElement('option'); opt.value = String(i+1).padStart(2,'0'); opt.textContent = name; monthSel.appendChild(opt); });
+    yearSel.innerHTML = '';
+    const thisYear = new Date().getFullYear();
+    for (let y = thisYear; y <= thisYear+3; y++) { const opt = document.createElement('option'); opt.value = String(y); opt.textContent = y; yearSel.appendChild(opt); }
+  }
+  fillDateSelects(document.getElementById('cArrDay'), document.getElementById('cArrMonth'), document.getElementById('cArrYear'));
+  fillDateSelects(document.getElementById('cDepDay'), document.getElementById('cDepMonth'), document.getElementById('cDepYear'));
+
+  let weeks = [];
+  let selectedStartIdx = null;
+  let weekCount = 1;
+
+  async function loadWeeks() {
+    const res = await fetch(API + '/api/weeks?weeks=52');
+    weeks = await res.json();
+    renderWeeks();
+  }
+
+  function renderWeeks() {
+    const list = document.getElementById('weekList');
+    list.innerHTML = '';
+    weeks.forEach((w, idx) => {
+      const row = document.createElement('div');
+      const isSelected = selectedStartIdx !== null && idx >= selectedStartIdx && idx < selectedStartIdx + weekCount;
+      row.className = 'week-row ' + (w.status === 'free' ? 'free' : 'disabled') + (isSelected ? ' selected' : '');
+      row.innerHTML = `<span>${fmtDate(w.start)} – ${fmtDate(w.end)} · CHF ${w.price}.–</span>`;
+      const badge = document.createElement('span');
+      badge.className = 'badge ' + w.status;
+      badge.textContent = w.status === 'free' ? 'Frei' : (w.status === 'requested' ? 'Angefragt' : 'Belegt');
+      row.appendChild(badge);
+      if (w.status === 'free') {
+        row.addEventListener('click', () => { selectedStartIdx = idx; weekCount = 1; updatePrice(); renderWeeks(); });
+      }
+      list.appendChild(row);
+    });
+  }
+
+  function updatePrice() {
+    const box = document.getElementById('priceBox');
+    if (selectedStartIdx === null) { box.style.display = 'none'; return; }
+    // Cap weekCount so the whole span stays inside the loaded list and all weeks are free.
+    let maxCount = 0;
+    for (let i = selectedStartIdx; i < weeks.length; i++) {
+      if (weeks[i].status !== 'free') break;
+      maxCount++;
+    }
+    if (weekCount > maxCount) weekCount = Math.max(1, maxCount);
+    document.getElementById('weeksCount').textContent = weekCount;
+    const span = weeks.slice(selectedStartIdx, selectedStartIdx + weekCount);
+    const total = span.reduce((sum, w) => sum + w.price, 0);
+    box.style.display = 'flex';
+    document.getElementById('priceAmount').textContent = `CHF ${total}.–`;
+  }
+
+  document.getElementById('weeksPlus').addEventListener('click', () => { if (selectedStartIdx === null) return; weekCount++; updatePrice(); renderWeeks(); });
+  document.getElementById('weeksMinus').addEventListener('click', () => { if (selectedStartIdx === null) return; weekCount = Math.max(1, weekCount - 1); updatePrice(); renderWeeks(); });
+
+  loadWeeks();
+
+  function showStatus(msg, ok) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'status ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+  }
+
+  document.getElementById('submitBtn').addEventListener('click', async () => {
+    const guestName = document.getElementById('guestName').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const numPeopleInput = document.querySelector('input[name="numPeople"]:checked');
+    const numPeople = numPeopleInput ? parseInt(numPeopleInput.value, 10) : 2;
+    const message = document.getElementById('message').value.trim();
+    const website = document.getElementById('website').value;
+    const agbAccepted = document.getElementById('agbAccepted').checked;
+
+    if (!guestName || !address || !email) {
+      showStatus('Bitte Name, Adresse und E-Mail ausfüllen.', false);
+      return;
+    }
+    if (!agbAccepted) {
+      showStatus('Bitte die AGB akzeptieren, um die Anfrage verbindlich zu senden.', false);
+      return;
+    }
+
+    let payload;
+    if (mode === 'week') {
+      if (selectedStartIdx === null) { showStatus('Bitte zuerst eine Woche auswählen.', false); return; }
+      const arrival = weeks[selectedStartIdx].start;
+      const departure = weeks[selectedStartIdx + weekCount - 1].end;
+      payload = { type: 'week', arrival, departure, guestName, address, email, numPeople, message, website, agbAccepted };
+    } else {
+      const arrival = `${document.getElementById('cArrYear').value}-${document.getElementById('cArrMonth').value}-${document.getElementById('cArrDay').value}`;
+      const departure = `${document.getElementById('cDepYear').value}-${document.getElementById('cDepMonth').value}-${document.getElementById('cDepDay').value}`;
+      if (arrival >= departure) { showStatus('Die Abreise muss nach der Anreise liegen.', false); return; }
+      payload = { type: 'custom', arrival, departure, guestName, address, email, numPeople, message, website, agbAccepted };
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    try {
+      const res = await fetch(API + '/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        document.getElementById('formView').style.display = 'none';
+        document.getElementById('successView').style.display = 'block';
+      } else {
+        showStatus(data.error || 'Fehler beim Senden. Bitte erneut versuchen.', false);
+      }
+    } catch (e) {
+      showStatus('Verbindungsfehler. Bitte erneut versuchen.', false);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
