@@ -193,7 +193,7 @@ export async function buildBookingDocumentPdf(stay, settings) {
       '(siehe „Zahlbar bis" oben).'],
     ['Rücktritt / Stornierung',
       'Bei einer Stornierung durch den Gast vor der Anreise ist folgender Anteil des Mietzinses geschuldet: ' +
-      'mehr als 89 Tage vorher kostenlos, 30–89 Tage vorher 50%, 14–29 Tage vorher 80%, 1–13 Tage vorher 100%. ' +
+      'mehr als 3 Monate (90 Tage) vorher kostenlos, 30–90 Tage vorher 50%, weniger als 30 Tage vorher 100%. ' +
       'Kann das Objekt anderweitig vermietet werden, reduziert sich der geschuldete Betrag entsprechend.'],
     ['Hausordnung und Haftung',
       'Der Gast verpflichtet sich, das Mietobjekt sorgfältig zu behandeln und die Hausordnung einzuhalten. ' +
