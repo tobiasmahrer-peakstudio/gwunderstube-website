@@ -40,7 +40,32 @@ const DEFAULT_SETTINGS = {
   currency: 'CHF',
   vatRate: 0,
 };
-const DEFAULT_WEEK_PRICING = { defaultPrice: 700, overrides: {} };
+// Saison-Grenzen: Winter = Dezember-März, Sommer = April-November (deckt das ganze Jahr ab).
+const DEFAULT_WEEK_PRICING = {
+  winterPrice: 750,
+  summerPrice: 650,
+  overrides: {},
+  shortStay: {
+    // Index 0 = 1 Nacht ... Index 5 = 6 Nächte. Nur als Referenz für "Sonderanfragen" (Kurzaufenthalte).
+    winter: [215, 305, 395, 485, 575, 665],
+    summer: [200, 275, 350, 425, 500, 575],
+  },
+};
+
+function isWinterMonth(dateStr) {
+  const month = parseInt(dateStr.split('-')[1], 10);
+  return month === 12 || month === 1 || month === 2 || month === 3;
+}
+
+// A week spanning the winter/summer boundary is priced by whichever season covers
+// the majority of its 7 nights (always a clear majority since 7 is odd).
+function seasonForWeek(weekStart) {
+  let winterNights = 0;
+  for (let i = 0; i < 7; i++) {
+    if (isWinterMonth(addDays(weekStart, i))) winterNights++;
+  }
+  return winterNights >= 4 ? 'winter' : 'summer';
+}
 
 function addDays(dateStr, days) {
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -77,12 +102,16 @@ function isOccupied(start, end, spans) {
   return spans.some((s) => rangesOverlap(start, end, s.start, s.end));
 }
 
-async function priceForWeek(env, weekStart) {
-  const pricing = await readJSON(env, 'weekPricing', DEFAULT_WEEK_PRICING);
+function computeWeekPrice(pricing, weekStart) {
   if (pricing.overrides && Object.prototype.hasOwnProperty.call(pricing.overrides, weekStart)) {
     return pricing.overrides[weekStart];
   }
-  return pricing.defaultPrice;
+  return seasonForWeek(weekStart) === 'winter' ? pricing.winterPrice : pricing.summerPrice;
+}
+
+async function priceForWeek(env, weekStart) {
+  const pricing = await readJSON(env, 'weekPricing', DEFAULT_WEEK_PRICING);
+  return computeWeekPrice(pricing, weekStart);
 }
 
 async function handleWeeks(request, env) {
@@ -97,7 +126,7 @@ async function handleWeeks(request, env) {
   for (let i = 0; i < count; i++) {
     const start = cursor;
     const end = addDays(start, 7);
-    const price = pricing.overrides?.[start] ?? pricing.defaultPrice;
+    const price = computeWeekPrice(pricing, start);
     let status = 'free';
     if (isOccupied(start, end, booked)) status = 'booked';
     else if (isOccupied(start, end, pending)) status = 'requested';
@@ -323,10 +352,19 @@ export default {
       } catch {
         return err('Invalid JSON');
       }
-      if (typeof body.defaultPrice !== 'number' || typeof body.overrides !== 'object') {
+      if (typeof body.winterPrice !== 'number' || typeof body.summerPrice !== 'number' || typeof body.overrides !== 'object') {
         return err('Invalid pricing payload');
       }
-      await writeJSON(env, 'weekPricing', { defaultPrice: body.defaultPrice, overrides: body.overrides });
+      const isNumArray6 = (a) => Array.isArray(a) && a.length === 6 && a.every((n) => typeof n === 'number');
+      const shortStay = body.shortStay && isNumArray6(body.shortStay.winter) && isNumArray6(body.shortStay.summer)
+        ? { winter: body.shortStay.winter, summer: body.shortStay.summer }
+        : DEFAULT_WEEK_PRICING.shortStay;
+      await writeJSON(env, 'weekPricing', {
+        winterPrice: body.winterPrice,
+        summerPrice: body.summerPrice,
+        overrides: body.overrides,
+        shortStay,
+      });
       return json({ ok: true });
     }
 

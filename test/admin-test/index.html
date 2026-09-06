@@ -226,17 +226,32 @@
 
     <!-- ===================== PREISE ===================== -->
     <div class="section" id="secPricing">
-      <p style="color:var(--walnut-2);">Standardmässig wird wochenweise Samstag–Samstag vermietet. Hier kannst du den Standardpreis sowie einzelne Wochen (z.B. Hochsaison) anpassen.</p>
+      <p style="color:var(--walnut-2);">Standardmässig wird wochenweise Samstag–Samstag vermietet. Eine Woche, die über den Winter/Sommer-Wechsel läuft, wird zu dem Preis der Saison verrechnet, in die mehr Nächte der Woche fallen.</p>
       <div class="card">
+        <h3>Saisonpreise</h3>
         <div class="field">
-          <label for="defaultPrice">Standardpreis pro Woche (CHF)</label>
-          <input type="number" id="defaultPrice" min="0" step="10">
+          <label for="winterPrice">Winter (1.12.–31.3.) – Preis pro Woche (CHF)</label>
+          <input type="number" id="winterPrice" min="0" step="10">
+        </div>
+        <div class="field">
+          <label for="summerPrice">Sommer (1.4.–30.11.) – Preis pro Woche (CHF)</label>
+          <input type="number" id="summerPrice" min="0" step="10">
         </div>
         <div id="weekPriceList"></div>
         <div class="actions-row">
           <button class="btn btn-primary" id="savePricingBtn">Preise speichern</button>
         </div>
         <p class="status" id="pricingStatus"></p>
+      </div>
+
+      <div class="card">
+        <h3>Kurzaufenthalte (nur Referenz für Sonderfälle)</h3>
+        <p style="color:var(--walnut-2); font-size:0.9rem;">Nächte einzeln, nur auf kurzfristige Anfrage in Sonderfällen – wird bei einer Sonderanfrage im Annehmen-Formular automatisch als Preisvorschlag vorausgefüllt.</p>
+        <div id="shortStayTable"></div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="saveShortStayBtn">Kurzaufenthalt-Preise speichern</button>
+        </div>
+        <p class="status" id="shortStayStatus"></p>
       </div>
     </div>
 
@@ -544,12 +559,27 @@
       const rejectBtn = document.createElement('button');
       rejectBtn.className = 'btn-danger'; rejectBtn.textContent = 'Ablehnen';
 
+      let suggestedPrice = s.total;
+      let suggestionNote = '';
+      if (s.total === null) {
+        const nights = Math.round((new Date(s.departure) - new Date(s.arrival)) / 86400000);
+        if (nights >= 1 && nights <= 6) {
+          const season = isWinterMonth(s.arrival) ? 'winter' : 'summer';
+          const table = weekPricing.shortStay && weekPricing.shortStay[season];
+          if (table && table[nights - 1] !== undefined) {
+            suggestedPrice = table[nights - 1];
+            suggestionNote = `<p class="hint">Vorschlag aus Kurzaufenthalt-Tabelle (${nights} ${nights === 1 ? 'Nacht' : 'Nächte'}, ${season === 'winter' ? 'Winter' : 'Sommer'}) – kann angepasst werden.</p>`;
+          }
+        }
+      }
+
       const form = document.createElement('div');
       form.className = 'approve-form';
       form.innerHTML = `
         <div class="field">
           <label>Preis Aufenthalt (CHF)</label>
-          <input type="number" class="approvePrice" value="${s.total ?? ''}" min="0" step="10">
+          <input type="number" class="approvePrice" value="${suggestedPrice ?? ''}" min="0" step="10">
+          ${suggestionNote}
         </div>
         <div class="extraCostsWrap"></div>
         <button type="button" class="btn-small addExtraCost">+ Zusatzkosten</button>
@@ -646,11 +676,19 @@
   // =====================================================================
   // PREISE
   // =====================================================================
-  const defaultPriceInput = document.getElementById('defaultPrice');
+  const winterPriceInput = document.getElementById('winterPrice');
+  const summerPriceInput = document.getElementById('summerPrice');
   const weekPriceList = document.getElementById('weekPriceList');
   const pricingStatus = document.getElementById('pricingStatus');
-  let weekPricing = { defaultPrice: 700, overrides: {} };
+  const shortStayTable = document.getElementById('shortStayTable');
+  const shortStayStatus = document.getElementById('shortStayStatus');
+  let weekPricing = { winterPrice: 750, summerPrice: 650, overrides: {}, shortStay: { winter: [], summer: [] } };
   let upcomingWeeks = [];
+
+  function isWinterMonth(dateStr) {
+    const month = parseInt(dateStr.split('-')[1], 10);
+    return month === 12 || month === 1 || month === 2 || month === 3;
+  }
 
   async function loadPricing() {
     const [pRes, wRes] = await Promise.all([
@@ -659,8 +697,11 @@
     ]);
     weekPricing = await pRes.json();
     upcomingWeeks = await wRes.json();
-    defaultPriceInput.value = weekPricing.defaultPrice;
+    winterPriceInput.value = weekPricing.winterPrice;
+    summerPriceInput.value = weekPricing.summerPrice;
     renderWeekPricing();
+    renderShortStayTable();
+    renderStays(); // re-render so custom-request price suggestions use fresh pricing data
   }
 
   function renderWeekPricing() {
@@ -669,25 +710,67 @@
       const row = document.createElement('div');
       row.className = 'price-week-row';
       const override = weekPricing.overrides[w.start];
+      const seasonDefault = isWinterMonth(w.start) && isWinterMonth(w.end) ? weekPricing.winterPrice
+        : (!isWinterMonth(w.start) && !isWinterMonth(w.end)) ? weekPricing.summerPrice : w.price;
       row.innerHTML = `<span>${formatDateDisplay(w.start)} – ${formatDateDisplay(w.end)} <span class="badge ${w.status}">${w.status === 'free' ? 'Frei' : (w.status === 'requested' ? 'Angefragt' : 'Belegt')}</span></span>
-        <input type="number" min="0" step="10" placeholder="${weekPricing.defaultPrice}" value="${override !== undefined ? override : ''}" data-week="${w.start}">`;
+        <input type="number" min="0" step="10" placeholder="${seasonDefault}" value="${override !== undefined ? override : ''}" data-week="${w.start}">`;
       weekPriceList.appendChild(row);
     });
   }
 
+  function renderShortStayTable() {
+    shortStayTable.innerHTML = '';
+    const header = document.createElement('div');
+    header.className = 'price-week-row';
+    header.innerHTML = `<span><strong>Nächte</strong></span><span style="display:flex; gap:1rem;"><strong style="width:100px; display:inline-block;">Winter</strong><strong style="width:100px; display:inline-block;">Sommer</strong></span>`;
+    shortStayTable.appendChild(header);
+    for (let i = 0; i < 6; i++) {
+      const row = document.createElement('div');
+      row.className = 'price-week-row';
+      row.innerHTML = `<span>${i + 1} ${i === 0 ? 'Nacht' : 'Nächte'}</span>
+        <span style="display:flex; gap:1rem;">
+          <input type="number" min="0" step="5" value="${weekPricing.shortStay.winter[i] ?? ''}" data-short="winter-${i}" style="width:100px;">
+          <input type="number" min="0" step="5" value="${weekPricing.shortStay.summer[i] ?? ''}" data-short="summer-${i}" style="width:100px;">
+        </span>`;
+      shortStayTable.appendChild(row);
+    }
+  }
+
   document.getElementById('savePricingBtn').addEventListener('click', async () => {
-    const defaultPrice = parseFloat(defaultPriceInput.value);
-    if (isNaN(defaultPrice) || defaultPrice < 0) { showStatus(pricingStatus, 'Bitte einen gültigen Standardpreis angeben.', false); return; }
+    const winterPrice = parseFloat(winterPriceInput.value);
+    const summerPrice = parseFloat(summerPriceInput.value);
+    if (isNaN(winterPrice) || winterPrice < 0 || isNaN(summerPrice) || summerPrice < 0) {
+      showStatus(pricingStatus, 'Bitte gültige Preise für Winter und Sommer angeben.', false); return;
+    }
     const overrides = {};
     weekPriceList.querySelectorAll('input[data-week]').forEach((input) => {
       if (input.value !== '') overrides[input.dataset.week] = parseFloat(input.value);
     });
     const res = await fetch(API + '/api/weekpricing', {
       method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ defaultPrice, overrides }),
+      body: JSON.stringify({ winterPrice, summerPrice, overrides, shortStay: weekPricing.shortStay }),
     });
     if (res.ok) { showStatus(pricingStatus, 'Preise gespeichert.', true); await loadPricing(); }
     else showStatus(pricingStatus, 'Fehler beim Speichern.', false);
+  });
+
+  document.getElementById('saveShortStayBtn').addEventListener('click', async () => {
+    const winter = [], summer = [];
+    for (let i = 0; i < 6; i++) {
+      winter.push(parseFloat(shortStayTable.querySelector(`[data-short="winter-${i}"]`).value) || 0);
+      summer.push(parseFloat(shortStayTable.querySelector(`[data-short="summer-${i}"]`).value) || 0);
+    }
+    const res = await fetch(API + '/api/weekpricing', {
+      method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        winterPrice: weekPricing.winterPrice,
+        summerPrice: weekPricing.summerPrice,
+        overrides: weekPricing.overrides,
+        shortStay: { winter, summer },
+      }),
+    });
+    if (res.ok) { showStatus(shortStayStatus, 'Kurzaufenthalt-Preise gespeichert.', true); await loadPricing(); }
+    else showStatus(shortStayStatus, 'Fehler beim Speichern.', false);
   });
 
   // =====================================================================
