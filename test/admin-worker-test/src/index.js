@@ -160,6 +160,49 @@ async function handleWeeks(request, env) {
   return json(weeks);
 }
 
+function fmtDateShort(dateStr) {
+  const [y, m, d] = dateStr.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+// Best-effort notification — a failed send must never block the guest's request from going through.
+async function notifyNewRequest(env, stay) {
+  if (!env.RESEND_API_KEY) return;
+  const nights = Math.round((new Date(stay.departure) - new Date(stay.arrival)) / 86400000);
+  const priceLine = stay.total !== null ? `CHF ${stay.total}.–` : 'noch offen (individuelle Anfrage)';
+  const lines = [
+    `Neue Buchungsanfrage übers Gwunderstübli:`,
+    ``,
+    `Name: ${stay.guestName}`,
+    `Zeitraum: ${fmtDateShort(stay.arrival)} – ${fmtDateShort(stay.departure)} (${nights} ${nights === 1 ? 'Nacht' : 'Nächte'})`,
+    `Personen: ${stay.numPeople}`,
+    `Preis: ${priceLine}`,
+    `E-Mail: ${stay.email}`,
+    `Adresse: ${stay.address}`,
+  ];
+  if (stay.message) lines.push(`Nachricht: ${stay.message}`);
+  if (stay.isCustomRequest) lines.push(``, `Hinweis: Sonderanfrage (kein Standard-Wochenmuster) – Preis manuell prüfen.`);
+  lines.push(``, `Zur Prüfung: https://gwunderstube-lenk.ch/admin/`);
+
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Gwunderstübli <anfrage@gwunderstube-lenk.ch>',
+        to: 'armaschmid@bluewin.ch',
+        subject: `Neue Anfrage: ${stay.guestName}, ${fmtDateShort(stay.arrival)}–${fmtDateShort(stay.departure)}`,
+        text: lines.join('\n'),
+      }),
+    });
+  } catch (e) {
+    // Notification is best-effort; the request itself is already saved.
+  }
+}
+
 async function handleCreateRequest(request, env) {
   let body;
   try {
@@ -245,6 +288,8 @@ async function handleCreateRequest(request, env) {
   const stays = await readJSON(env, 'stays', []);
   stays.push(stay);
   await writeJSON(env, 'stays', stays);
+
+  await notifyNewRequest(env, stay);
 
   return json({ ok: true, id: stay.id });
 }
