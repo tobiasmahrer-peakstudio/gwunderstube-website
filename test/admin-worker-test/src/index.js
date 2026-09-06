@@ -35,7 +35,7 @@ const DEFAULT_SETTINGS = {
   companyAddress: 'Rawilstrasse 27, 3775 Lenk',
   accountHolder: '',
   iban: '',
-  paymentTermsDays: 14,
+  paymentTermsDays: 30,
   invoicePrefix: '2026-',
   currency: 'CHF',
   vatRate: 0,

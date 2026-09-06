@@ -26,6 +26,22 @@ function fmtDate(d) {
 function fmtMoney(n) {
   return (Math.round(n * 100) / 100).toFixed(2);
 }
+function addDaysStr(dateStr, days) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+// Due 30 days (or configured term) after the invoice date — but if the stay starts
+// sooner than that, the amount must be settled before arrival instead.
+function computePaymentDeadline(stay, settings) {
+  const today = new Date().toISOString().slice(0, 10);
+  const termDate = addDaysStr(today, settings.paymentTermsDays || 30);
+  const dayBeforeArrival = addDaysStr(stay.arrival, -1);
+  let deadline = termDate < dayBeforeArrival ? termDate : dayBeforeArrival;
+  if (deadline < today) deadline = today;
+  return deadline;
+}
 
 export async function buildBookingDocumentPdf(stay, settings) {
   const doc = await PDFDocument.create();
@@ -86,8 +102,7 @@ export async function buildBookingDocumentPdf(stay, settings) {
   y -= 30;
 
   // --- Meta box: invoice number / date / due date ---
-  const deadline = new Date();
-  deadline.setDate(deadline.getDate() + (settings.paymentTermsDays || 14));
+  const deadline = computePaymentDeadline(stay, settings);
   box(MARGIN, y + 10, CONTENT_W, 50, COLORS.cream2);
   const metaColW = CONTENT_W / 3;
   const labelY = y - 6;
@@ -97,7 +112,7 @@ export async function buildBookingDocumentPdf(stay, settings) {
   text('RECHNUNGSDATUM', MARGIN + metaColW + 14, labelY, { size: 7, font: bold, color: COLORS.walnut2 });
   text(fmtDate(new Date().toISOString().slice(0, 10)), MARGIN + metaColW + 14, metaY, { size: 12, color: COLORS.bark });
   text('ZAHLBAR BIS', MARGIN + metaColW * 2 + 14, labelY, { size: 7, font: bold, color: COLORS.walnut2 });
-  text(fmtDate(deadline.toISOString().slice(0, 10)), MARGIN + metaColW * 2 + 14, metaY, { size: 12, color: COLORS.bark });
+  text(fmtDate(deadline), MARGIN + metaColW * 2 + 14, metaY, { size: 12, color: COLORS.bark });
   y -= 76;
 
   // --- Two columns: Gast / Aufenthalt ---
@@ -172,6 +187,10 @@ export async function buildBookingDocumentPdf(stay, settings) {
 
   const clauses = [
     ['Mietobjekt', 'Gwunderstübli, Rawilstrasse 27, 3775 Lenk (Ferienstudio für 2 Personen).'],
+    ['Zahlungsbedingungen',
+      `Der Mietzins ist innert ${settings.paymentTermsDays || 30} Tagen ab Rechnungsdatum zu begleichen. ` +
+      'Beginnt der Aufenthalt innerhalb dieser Frist, ist der Betrag spätestens vor der Anreise zu begleichen ' +
+      '(siehe „Zahlbar bis" oben).'],
     ['Rücktritt / Stornierung',
       'Bei einer Stornierung durch den Gast vor der Anreise ist folgender Anteil des Mietzinses geschuldet: ' +
       'mehr als 89 Tage vorher kostenlos, 30–89 Tage vorher 50%, 14–29 Tage vorher 80%, 1–13 Tage vorher 100%. ' +
