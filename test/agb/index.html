@@ -27,6 +27,10 @@
   h2:first-child{margin-top:0;}
   p{color:var(--walnut-2); margin:0 0 0.8rem;}
   ol.sections{padding-left:1.2rem; margin:0;}
+  .cancel-table{width:100%; border-collapse:collapse; margin:0.8rem 0 1rem;}
+  .cancel-table th, .cancel-table td{text-align:left; padding:0.6rem 0.8rem; border-bottom:1px solid var(--cream-2); font-size:0.92rem;}
+  .cancel-table th{color:var(--walnut-2); font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px;}
+  .cancel-table td:last-child, .cancel-table th:last-child{text-align:right; font-weight:700; color:var(--bark);}
 </style>
 </head>
 <body>
@@ -51,7 +55,15 @@
     <p>Anreise und Abreise erfolgen an den in der Buchungsbestätigung genannten Daten. Standardmässig wird wochenweise von Samstag bis Samstag vermietet; Kurzaufenthalte sind nur in Absprache mit der Vermieterin möglich.</p>
 
     <h2>5. Rücktritt / Stornierung</h2>
-    <p>Ein Rücktritt ist bis 14 Tage vor Anreise kostenlos möglich. Bei späterem Rücktritt oder Nichtantritt bleibt der vereinbarte Mietzins geschuldet, sofern das Objekt nicht anderweitig vermietet werden kann.</p>
+    <p>Bei einer Stornierung durch den Gast vor der Anreise ist folgender Anteil des vereinbarten Mietzinses geschuldet:</p>
+    <table class="cancel-table">
+      <tr><th>Zeitpunkt der Stornierung vor Anreise</th><th>Geschuldeter Anteil</th></tr>
+      <tr><td>Mehr als 89 Tage</td><td>kostenlos</td></tr>
+      <tr><td>30–89 Tage</td><td>50%</td></tr>
+      <tr><td>14–29 Tage</td><td>80%</td></tr>
+      <tr><td>1–13 Tage</td><td>100%</td></tr>
+    </table>
+    <p>Kann das Objekt für den stornierten Zeitraum anderweitig vermietet werden, wird der geschuldete Betrag entsprechend reduziert.</p>
 
     <h2>6. Hausordnung und Haftung</h2>
     <p>Der Gast verpflichtet sich, das Mietobjekt sorgfältig zu behandeln und die Hausordnung einzuhalten. Für Schäden, die während der Mietdauer entstehen, haftet der Gast.</p>

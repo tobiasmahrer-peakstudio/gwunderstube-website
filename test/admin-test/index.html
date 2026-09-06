@@ -217,7 +217,7 @@
 
     <!-- ===================== AUFENTHALTE ===================== -->
     <div class="section" id="secStays">
-      <p style="color:var(--walnut-2);">Bestätigte Aufenthalte mit Rechnung und Mietvertrag.</p>
+      <p style="color:var(--walnut-2);">Bestätigte Aufenthalte mit Buchungsbestätigung &amp; Rechnung als ein Dokument.</p>
       <div class="card">
         <h3>Bestätigte Aufenthalte</h3>
         <ul class="item-list" id="staysList"></ul>
@@ -257,7 +257,7 @@
 
     <!-- ===================== EINSTELLUNGEN ===================== -->
     <div class="section" id="secSettings">
-      <p style="color:var(--walnut-2);">Diese Angaben erscheinen auf Rechnung und Mietvertrag.</p>
+      <p style="color:var(--walnut-2);">Diese Angaben erscheinen auf der Buchungsbestätigung &amp; Rechnung.</p>
       <div class="card">
         <div class="field"><label for="setCompanyName">Firmenname</label><input type="text" id="setCompanyName"></div>
         <div class="field"><label for="setCompanyAddress">Adresse</label><textarea id="setCompanyAddress"></textarea></div>
@@ -516,12 +516,12 @@
     renderStays();
   }
 
-  async function openPdf(id, kind) {
+  async function openPdf(id) {
     // Open the tab synchronously (still inside the click gesture) so browsers
     // don't treat it as a blocked popup once we fill it in after the fetch.
     const tab = window.open('', '_blank');
     try {
-      const res = await fetch(`${API}/api/stays/${id}/${kind}.pdf`, { headers: authHeaders() });
+      const res = await fetch(`${API}/api/stays/${id}/document.pdf`, { headers: authHeaders() });
       if (!res.ok) { if (tab) tab.close(); alert('PDF konnte nicht geladen werden.'); return; }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -658,14 +658,10 @@
         <span class="item-meta">Rechnung ${s.invoiceNumber} · Total CHF ${s.total}.–</span>`;
       const actions = document.createElement('div');
       actions.className = 'item-actions';
-      const invBtn = document.createElement('button');
-      invBtn.className = 'btn-small'; invBtn.textContent = '📄 Rechnung';
-      invBtn.addEventListener('click', () => openPdf(s.id, 'invoice'));
-      const contractBtn = document.createElement('button');
-      contractBtn.className = 'btn-small'; contractBtn.textContent = '📄 Vertrag';
-      contractBtn.addEventListener('click', () => openPdf(s.id, 'contract'));
-      actions.appendChild(invBtn);
-      actions.appendChild(contractBtn);
+      const docBtn = document.createElement('button');
+      docBtn.className = 'btn-small'; docBtn.textContent = '📄 Dokument';
+      docBtn.addEventListener('click', () => openPdf(s.id));
+      actions.appendChild(docBtn);
       li.appendChild(info);
       li.appendChild(actions);
       staysList.appendChild(li);

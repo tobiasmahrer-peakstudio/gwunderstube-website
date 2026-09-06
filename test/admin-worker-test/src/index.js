@@ -1,4 +1,4 @@
-import { buildInvoicePdf, buildContractPdf } from './pdf.js';
+import { buildBookingDocumentPdf } from './pdf.js';
 
 function corsHeaders() {
   return {
@@ -277,16 +277,14 @@ async function handleDecision(request, env, id) {
   ranges.push({ start: stay.arrival, end: addDays(stay.departure, -1), name: stay.guestName });
   await writeJSON(env, 'ranges', ranges);
 
-  const invoiceBytes = await buildInvoicePdf(stay, settings);
-  const contractBytes = await buildContractPdf(stay, settings);
-  await env.BOOKINGS.put(`pdf:invoice:${stay.id}`, invoiceBytes);
-  await env.BOOKINGS.put(`pdf:contract:${stay.id}`, contractBytes);
+  const documentBytes = await buildBookingDocumentPdf(stay, settings);
+  await env.BOOKINGS.put(`pdf:document:${stay.id}`, documentBytes);
 
   return json({ ok: true, invoiceNumber });
 }
 
-async function handlePdf(env, id, kind) {
-  const bytes = await env.BOOKINGS.get(`pdf:${kind}:${id}`, 'arrayBuffer');
+async function handlePdf(env, id) {
+  const bytes = await env.BOOKINGS.get(`pdf:document:${id}`, 'arrayBuffer');
   if (!bytes) return err('PDF nicht gefunden', 404);
   return new Response(bytes, {
     headers: { 'Content-Type': 'application/pdf', ...corsHeaders() },
@@ -402,10 +400,10 @@ export default {
     if (decisionMatch && request.method === 'POST') {
       return handleDecision(request, env, decisionMatch[1]);
     }
-    const pdfMatch = path.match(/^\/api\/stays\/([a-f0-9-]+)\/(invoice|contract)\.pdf$/);
+    const pdfMatch = path.match(/^\/api\/stays\/([a-f0-9-]+)\/document\.pdf$/);
     if (pdfMatch && request.method === 'GET') {
       if (!isAuthorized(request, env)) return err('Unauthorized', 401);
-      return handlePdf(env, pdfMatch[1], pdfMatch[2]);
+      return handlePdf(env, pdfMatch[1]);
     }
 
     return new Response('Not found', { status: 404, headers });

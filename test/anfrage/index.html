@@ -32,6 +32,10 @@
   textarea{resize:vertical; min-height:80px;}
   input:focus, select:focus, textarea:focus{outline:2px solid var(--gold); outline-offset:1px;}
   .field{margin-bottom:1.1rem;}
+  .cancel-table{width:100%; border-collapse:collapse;}
+  .cancel-table th, .cancel-table td{text-align:left; padding:0.6rem 0.4rem; border-bottom:1px solid var(--cream-2); font-size:0.9rem;}
+  .cancel-table th{color:var(--walnut-2); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;}
+  .cancel-table td:last-child, .cancel-table th:last-child{text-align:right; font-weight:700; color:var(--bark);}
   .honeypot{position:absolute; left:-9999px; opacity:0;}
 
   .tabs{display:flex; gap:0.6rem; margin-top:1.5rem;}
@@ -119,6 +123,17 @@
           <select id="cDepDay"></select><select id="cDepMonth"></select><select id="cDepYear"></select>
         </div>
       </div>
+    </div>
+
+    <div class="card">
+      <h3>Stornierungsbedingungen</h3>
+      <table class="cancel-table">
+        <tr><th>Stornierung vor Anreise</th><th>Geschuldeter Anteil</th></tr>
+        <tr><td>Mehr als 89 Tage</td><td>kostenlos</td></tr>
+        <tr><td>30–89 Tage</td><td>50%</td></tr>
+        <tr><td>14–29 Tage</td><td>80%</td></tr>
+        <tr><td>1–13 Tage</td><td>100%</td></tr>
+      </table>
     </div>
 
     <div class="card">
