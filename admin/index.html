@@ -94,8 +94,7 @@
 
   .cal-toggle{background:none; border:1px solid var(--cream-2); color:var(--walnut-2); border-radius:20px; padding:0.5rem 1rem; font-size:0.85rem; font-weight:700; cursor:pointer; font-family:inherit;}
   .cal-toggle:hover{background:var(--cream-2);}
-  .cal-panel{display:none; margin-top:1rem; border:1px solid var(--cream-2); border-radius:12px; padding:1.2rem;}
-  .cal-panel.open{display:block;}
+  .cal-panel{margin-top:1rem; border:1px solid var(--cream-2); border-radius:12px; padding:1.2rem;}
   .cal-panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:0.9rem;}
   .cal-panel-head button{width:32px; height:32px; border-radius:50%; border:1px solid var(--cream-2); background:#fff; cursor:pointer; font-size:1rem;}
   .cal-panel-head button:hover{background:var(--cream-2);}
@@ -183,24 +182,7 @@
           <p class="hint" style="margin-top:-0.5rem; margin-bottom:1rem;">Für eine vollwertige Buchung inkl. Rechnung/Bestätigung bitte Adresse, Personenzahl und Preis mit angeben.</p>
           <div class="add-row">
             <div>
-              <label>Von</label>
-              <div class="date-fields">
-                <select id="startDay"></select>
-                <select id="startMonth"></select>
-                <select id="startYear"></select>
-              </div>
-            </div>
-            <div>
-              <label>Bis</label>
-              <div class="date-fields">
-                <select id="endDay"></select>
-                <select id="endMonth"></select>
-                <select id="endYear"></select>
-              </div>
-            </div>
-
-            <div>
-              <button type="button" class="cal-toggle" id="calToggle">📅 Kalender öffnen</button>
+              <label>Zeitraum</label>
               <div class="cal-panel" id="calPanel">
                 <div class="cal-panel-head">
                   <button type="button" id="cPrev">‹</button>
@@ -212,7 +194,7 @@
                   <span><span class="cdot booked"></span>Bereits belegt</span>
                   <span><span class="cdot picked"></span>Ausgewählt</span>
                 </div>
-                <p class="hint" id="cHint">Ersten Tag anklicken (Von), dann letzten Tag (Bis).</p>
+                <p class="hint" id="cHint">Ersten Tag anklicken (Anreise), dann den Abreisetag (Checkout) anklicken – für eine ganze Woche z.B. der nächste Samstag.</p>
               </div>
             </div>
 
@@ -380,49 +362,6 @@
   const newPrice = document.getElementById('newPrice');
   const priceHint = document.getElementById('priceHint');
   const newExtraCostsWrap = document.getElementById('newExtraCostsWrap');
-  const startDay = document.getElementById('startDay');
-  const startMonth = document.getElementById('startMonth');
-  const startYear = document.getElementById('startYear');
-  const endDay = document.getElementById('endDay');
-  const endMonth = document.getElementById('endMonth');
-  const endYear = document.getElementById('endYear');
-
-  function fillDateSelects(daySel, monthSel, yearSel) {
-    daySel.innerHTML = '';
-    for (let d = 1; d <= 31; d++) {
-      const opt = document.createElement('option');
-      opt.value = String(d).padStart(2, '0'); opt.textContent = d;
-      daySel.appendChild(opt);
-    }
-    monthSel.innerHTML = '';
-    MONTHS.forEach((name, i) => {
-      const opt = document.createElement('option');
-      opt.value = String(i + 1).padStart(2, '0'); opt.textContent = name;
-      monthSel.appendChild(opt);
-    });
-    yearSel.innerHTML = '';
-    const thisYear = new Date().getFullYear();
-    for (let y = thisYear; y <= thisYear + 3; y++) {
-      const opt = document.createElement('option');
-      opt.value = String(y); opt.textContent = y;
-      yearSel.appendChild(opt);
-    }
-  }
-  fillDateSelects(startDay, startMonth, startYear);
-  fillDateSelects(endDay, endMonth, endYear);
-
-  function selectsToDateStr(daySel, monthSel, yearSel) {
-    return `${yearSel.value}-${monthSel.value}-${daySel.value}`;
-  }
-  function setSelects(daySel, monthSel, yearSel, dateStr) {
-    const [y, m, d] = dateStr.split('-');
-    yearSel.value = y; monthSel.value = m; daySel.value = d;
-  }
-  function isValidDate(dateStr) {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const dt = new Date(y, m - 1, d);
-    return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
-  }
 
   let ranges = [];
 
@@ -536,9 +475,9 @@
   newPrice.addEventListener('input', () => { priceManuallySet = true; });
 
   async function suggestPrice() {
-    const start = selectsToDateStr(startDay, startMonth, startYear);
-    const end = selectsToDateStr(endDay, endMonth, endYear);
-    if (!isValidDate(start) || !isValidDate(end) || start >= end) { priceHint.textContent = ''; return; }
+    const start = pickStart;
+    const end = pickEnd;
+    if (!start || !end || start >= end) { priceHint.textContent = ''; return; }
     const nights = Math.round((new Date(end) - new Date(start)) / 86400000);
     if (!weekPricing.shortStay) return;
     let suggested = null;
@@ -561,12 +500,10 @@
       priceHint.textContent = 'Kein automatischer Preis möglich für diesen Zeitraum – bitte manuell eintragen.';
     }
   }
-  [startDay, startMonth, startYear, endDay, endMonth, endYear].forEach((el) => el.addEventListener('change', suggestPrice));
-
   addBtn.addEventListener('click', async () => {
-    const start = selectsToDateStr(startDay, startMonth, startYear);
-    const end = selectsToDateStr(endDay, endMonth, endYear);
-    if (!isValidDate(start) || !isValidDate(end)) { showStatus(statusEl, 'Ungültiges Datum.', false); return; }
+    const start = pickStart;
+    const end = pickEnd;
+    if (!start || !end) { showStatus(statusEl, 'Bitte im Kalender einen Zeitraum auswählen.', false); return; }
     if (start >= end) { showStatus(statusEl, 'Das Anreisedatum muss vor dem Abreisedatum liegen.', false); return; }
     if (!newName.value.trim()) { showStatus(statusEl, 'Bitte einen Namen angeben.', false); return; }
 
@@ -614,8 +551,6 @@
   });
 
   // Kalender-Picker (Zeiträume)
-  const calToggle = document.getElementById('calToggle');
-  const calPanel = document.getElementById('calPanel');
   const cPrev = document.getElementById('cPrev');
   const cNext = document.getElementById('cNext');
   const cLabel = document.getElementById('cLabel');
@@ -627,7 +562,6 @@
   let pickStart = null;
   let pickEnd = null;
 
-  calToggle.addEventListener('click', () => calPanel.classList.toggle('open'));
   function isBookedDate(dateStr) { return ranges.some(r => dateStr >= r.start && dateStr <= r.end); }
 
   function renderCal() {
@@ -658,16 +592,15 @@
   function onDayClick(dateStr) {
     if (!pickStart || (pickStart && pickEnd)) {
       pickStart = dateStr; pickEnd = null;
-      cHint.textContent = 'Jetzt letzten Tag anklicken (Bis).';
+      cHint.textContent = 'Jetzt den Abreisetag anklicken (Checkout).';
     } else if (dateStr < pickStart) {
       pickStart = dateStr;
-      cHint.textContent = 'Jetzt letzten Tag anklicken (Bis).';
+      cHint.textContent = 'Jetzt den Abreisetag anklicken (Checkout).';
     } else {
       pickEnd = dateStr;
-      setSelects(startDay, startMonth, startYear, pickStart);
-      setSelects(endDay, endMonth, endYear, pickEnd);
-      cHint.textContent = `Ausgewählt: ${formatDateDisplay(pickStart)} – ${formatDateDisplay(pickEnd)}. Unten „+ Hinzufügen" klicken.`;
+      cHint.textContent = `Ausgewählt: ${formatDateDisplay(pickStart)} – ${formatDateDisplay(pickEnd)}.`;
     }
+    suggestPrice();
     renderCal();
   }
   cPrev.addEventListener('click', () => { cMonth--; if (cMonth < 0) { cMonth = 11; cYear--; } renderCal(); });
