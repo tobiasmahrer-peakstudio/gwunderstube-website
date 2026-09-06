@@ -337,7 +337,12 @@ export default {
           return err('Invalid range format, expected {start, end, name?}');
         }
       }
-      const cleaned = body.map((r) => ({ start: r.start, end: r.end, name: (r.name || '').slice(0, 200) }));
+      const cleaned = body.map((r) => ({
+        start: r.start,
+        end: r.end,
+        name: (r.name || '').slice(0, 200),
+        note: (r.note || '').slice(0, 1000),
+      }));
       await writeJSON(env, 'ranges', cleaned);
       return json({ ok: true });
     }

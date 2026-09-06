@@ -41,6 +41,11 @@
 
   .tabs{display:flex; gap:0.6rem; margin-top:1.5rem;}
   .tab-btn{flex:1; padding:0.8rem; border-radius:12px; border:1px solid var(--cream-2); background:#fff; cursor:pointer; font-weight:700; font-family:inherit; color:var(--walnut-2); transition:all .2s ease;}
+
+  .people-toggle{display:flex; gap:0.6rem;}
+  .people-option{flex:1; display:flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.75rem; border-radius:10px; border:1px solid var(--cream-2); background:var(--cream); cursor:pointer; font-weight:700; color:var(--walnut-2); transition:all .2s ease;}
+  .people-option input{width:auto; margin:0;}
+  .people-option.selected{background:var(--bark); color:#fff; border-color:var(--bark);}
   .tab-btn.active{background:var(--bark); color:#fff; border-color:var(--bark);}
 
   .week-list{max-height:360px; overflow-y:auto; border:1px solid var(--cream-2); border-radius:12px;}
@@ -142,7 +147,13 @@
       <div class="field"><label for="guestName">Name</label><input type="text" id="guestName"></div>
       <div class="field"><label for="address">Adresse</label><textarea id="address" placeholder="Strasse, PLZ, Ort"></textarea></div>
       <div class="field"><label for="email">E-Mail</label><input type="email" id="email"></div>
-      <div class="field"><label for="numPeople">Anzahl Personen</label><input type="number" id="numPeople" min="1" max="2" value="2"></div>
+      <div class="field">
+        <label>Anzahl Personen</label>
+        <div class="people-toggle">
+          <label class="people-option"><input type="radio" name="numPeople" value="1"> 1 Person</label>
+          <label class="people-option selected"><input type="radio" name="numPeople" value="2" checked> 2 Personen</label>
+        </div>
+      </div>
       <div class="field"><label for="message">Nachricht (optional)</label><textarea id="message"></textarea></div>
       <input type="text" class="honeypot" id="website" tabindex="-1" autocomplete="off">
 
@@ -176,6 +187,13 @@
   const weekPanel = document.getElementById('weekPanel');
   const customPanel = document.getElementById('customPanel');
   let mode = 'week';
+
+  document.querySelectorAll('.people-option input').forEach((input) => {
+    input.addEventListener('change', () => {
+      document.querySelectorAll('.people-option').forEach((opt) => opt.classList.remove('selected'));
+      input.closest('.people-option').classList.add('selected');
+    });
+  });
 
   tabWeek.addEventListener('click', () => { mode = 'week'; tabWeek.classList.add('active'); tabCustom.classList.remove('active'); weekPanel.style.display='block'; customPanel.style.display='none'; });
   tabCustom.addEventListener('click', () => { mode = 'custom'; tabCustom.classList.add('active'); tabWeek.classList.remove('active'); weekPanel.style.display='none'; customPanel.style.display='block'; });
@@ -261,7 +279,8 @@
     const guestName = document.getElementById('guestName').value.trim();
     const address = document.getElementById('address').value.trim();
     const email = document.getElementById('email').value.trim();
-    const numPeople = parseInt(document.getElementById('numPeople').value, 10) || 1;
+    const numPeopleInput = document.querySelector('input[name="numPeople"]:checked');
+    const numPeople = numPeopleInput ? parseInt(numPeopleInput.value, 10) : 2;
     const message = document.getElementById('message').value.trim();
     const website = document.getElementById('website').value;
     const agbAccepted = document.getElementById('agbAccepted').checked;

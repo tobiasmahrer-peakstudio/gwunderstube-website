@@ -64,6 +64,7 @@
   .range-list li:last-child, .item-list li:last-child{border-bottom:none;}
   .range-info, .item-info{display:flex; flex-direction:column; gap:0.15rem;}
   .range-name{font-size:0.82rem; color:var(--moss-dark); font-weight:700;}
+  .range-note{font-size:0.82rem; color:var(--walnut-2); font-style:italic;}
   .item-meta{font-size:0.82rem; color:var(--walnut-2);}
   .item-actions{display:flex; gap:0.5rem; flex-shrink:0; flex-wrap:wrap;}
 
@@ -182,6 +183,10 @@
           <div>
             <label for="newName">Name (nur intern sichtbar)</label>
             <input type="text" id="newName" placeholder="z.B. Familie Muster">
+          </div>
+          <div>
+            <label for="newNote">Notiz (optional, nur intern sichtbar)</label>
+            <textarea id="newNote" placeholder="z.B. Anreise verspätet sich, Hund dabei, …"></textarea>
           </div>
 
           <div>
@@ -343,6 +348,7 @@
   const saveBtn = document.getElementById('saveBtn');
   const statusEl = document.getElementById('status');
   const newName = document.getElementById('newName');
+  const newNote = document.getElementById('newNote');
   const startDay = document.getElementById('startDay');
   const startMonth = document.getElementById('startMonth');
   const startYear = document.getElementById('startYear');
@@ -402,6 +408,21 @@
       nameEl.textContent = '👤 ' + r.name;
       info.appendChild(nameEl);
     }
+    if (r.note) {
+      const noteEl = document.createElement('span');
+      noteEl.className = 'range-note';
+      noteEl.textContent = '📝 ' + r.note;
+      info.appendChild(noteEl);
+    }
+    const noteBtn = document.createElement('button');
+    noteBtn.className = 'btn-small';
+    noteBtn.textContent = r.note ? 'Notiz bearbeiten' : '+ Notiz';
+    noteBtn.addEventListener('click', () => {
+      const updated = prompt('Notiz für diesen Zeitraum:', r.note || '');
+      if (updated === null) return;
+      r.note = updated.trim();
+      renderList();
+    });
     const delBtn = document.createElement('button');
     delBtn.className = 'btn btn-danger';
     delBtn.textContent = 'Entfernen';
@@ -410,8 +431,12 @@
       renderList();
       renderCal();
     });
+    const actions = document.createElement('div');
+    actions.className = 'item-actions';
+    actions.appendChild(noteBtn);
+    actions.appendChild(delBtn);
     li.appendChild(info);
-    li.appendChild(delBtn);
+    li.appendChild(actions);
     return li;
   }
 
@@ -453,8 +478,9 @@
     const end = selectsToDateStr(endDay, endMonth, endYear);
     if (!isValidDate(start) || !isValidDate(end)) { showStatus(statusEl, 'Ungültiges Datum.', false); return; }
     if (start > end) { showStatus(statusEl, 'Das Startdatum muss vor dem Enddatum liegen.', false); return; }
-    ranges.push({ start, end, name: newName.value.trim() });
+    ranges.push({ start, end, name: newName.value.trim(), note: newNote.value.trim() });
     newName.value = '';
+    newNote.value = '';
     pickStart = null; pickEnd = null;
     renderList(); renderCal();
     statusEl.style.display = 'none';
