@@ -523,6 +523,9 @@
   }
   document.getElementById('newAddExtraCost').addEventListener('click', () => addNewExtraRow());
 
+  let priceManuallySet = false;
+  newPrice.addEventListener('input', () => { priceManuallySet = true; });
+
   async function suggestPrice() {
     const start = selectsToDateStr(startDay, startMonth, startYear);
     const end = selectsToDateStr(endDay, endMonth, endYear);
@@ -543,9 +546,9 @@
       suggested = total;
     }
     if (suggested !== null) {
-      newPrice.value = suggested;
+      if (!priceManuallySet) newPrice.value = suggested;
       priceHint.textContent = `Automatisch berechnet für ${nights} Nächte. Kann angepasst werden.`;
-    } else {
+    } else if (!priceManuallySet) {
       priceHint.textContent = 'Kein automatischer Preis möglich für diesen Zeitraum – bitte manuell eintragen.';
     }
   }
@@ -588,6 +591,7 @@
         newName.value = ''; newAddress.value = ''; newEmail.value = ''; newPeople.value = '2';
         newPrice.value = ''; newNote.value = ''; priceHint.textContent = '';
         newExtraCostsWrap.innerHTML = '';
+        priceManuallySet = false;
         pickStart = null; pickEnd = null;
         await Promise.all([loadRanges(), loadStays()]);
       } else {
