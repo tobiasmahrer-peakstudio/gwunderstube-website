@@ -66,7 +66,24 @@
   .price-box{background:var(--cream-2); border-radius:12px; padding:1rem 1.2rem; margin-top:1rem; display:flex; justify-content:space-between; align-items:center;}
   .price-box .amount{font-family:'Playfair Display', serif; font-size:1.5rem; color:var(--gold);}
 
-  .date-fields{display:grid; grid-template-columns:70px 1fr 90px; gap:0.5rem;}
+  .cal-box{margin-top:1rem; border:1px solid var(--cream-2); border-radius:12px; padding:1.2rem;}
+  .cal-panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:0.9rem;}
+  .cal-panel-head button{width:32px; height:32px; border-radius:50%; border:1px solid var(--cream-2); background:#fff; cursor:pointer; font-size:1rem;}
+  .cal-panel-head button:hover{background:var(--cream-2);}
+  .cal-panel-label{font-weight:800; font-family:'Playfair Display', serif;}
+  .cal-panel-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:0.3rem;}
+  .cal-panel-grid .dow{font-size:0.68rem; font-weight:800; text-align:center; color:var(--walnut-2); padding-bottom:0.3rem;}
+  .cday{aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:0.82rem; cursor:pointer; user-select:none;}
+  .cday.empty{visibility:hidden; cursor:default;}
+  .cday.free:hover{background:var(--cream-2);}
+  .cday.booked{background:#f5e0d6; color:#a34a35; cursor:not-allowed;}
+  .cday.picked-start, .cday.picked-end{background:var(--gold); color:#fff; font-weight:800;}
+  .cday.in-range{background:#eef1e9; color:var(--moss-dark);}
+  .cal-legend{display:flex; gap:1.2rem; margin-top:0.9rem; font-size:0.78rem; color:var(--walnut-2);}
+  .cal-legend span{display:inline-flex; align-items:center; gap:0.4rem;}
+  .cdot{width:10px; height:10px; border-radius:50%; display:inline-block;}
+  .cdot.booked{background:#c1543f;} .cdot.picked{background:var(--gold);}
+  .hint{font-size:0.85rem; color:var(--walnut-2); margin-top:0.8rem;}
 
   .btn{
     display:inline-block; padding:0.9rem 1.8rem; border-radius:30px; border:none; cursor:pointer;
@@ -118,17 +135,18 @@
     <div class="card" id="customPanel" style="display:none;">
       <h3>Gewünschter Zeitraum</h3>
       <p style="color:var(--walnut-2); font-size:0.9rem;">Für individuelle Zeiträume gibt es noch keinen automatischen Preis – wir melden uns mit einem Angebot.</p>
-      <div class="field">
-        <label>Anreise</label>
-        <div class="date-fields">
-          <select id="cArrDay"></select><select id="cArrMonth"></select><select id="cArrYear"></select>
+      <div class="cal-box">
+        <div class="cal-panel-head">
+          <button type="button" id="ccPrev">‹</button>
+          <span class="cal-panel-label" id="ccLabel"></span>
+          <button type="button" id="ccNext">›</button>
         </div>
-      </div>
-      <div class="field">
-        <label>Abreise</label>
-        <div class="date-fields">
-          <select id="cDepDay"></select><select id="cDepMonth"></select><select id="cDepYear"></select>
+        <div class="cal-panel-grid" id="ccGrid"></div>
+        <div class="cal-legend">
+          <span><span class="cdot booked"></span>Belegt</span>
+          <span><span class="cdot picked"></span>Ausgewählt</span>
         </div>
+        <p class="hint" id="ccHint">Ersten Tag anklicken (Anreise), dann letzten Tag (Abreise).</p>
       </div>
     </div>
 
@@ -203,19 +221,75 @@
     return `${d}.${m}.${y}`;
   }
 
-  function fillDateSelects(daySel, monthSel, yearSel) {
-    daySel.innerHTML = '';
-    for (let d = 1; d <= 31; d++) {
-      const opt = document.createElement('option'); opt.value = String(d).padStart(2,'0'); opt.textContent = d; daySel.appendChild(opt);
+  // Sonderanfrage-Kalender: zeigt belegte Tage direkt an, nur freie Tage sind anklickbar.
+  const ccPrev = document.getElementById('ccPrev');
+  const ccNext = document.getElementById('ccNext');
+  const ccLabel = document.getElementById('ccLabel');
+  const ccGrid = document.getElementById('ccGrid');
+  const ccHint = document.getElementById('ccHint');
+  const today = new Date();
+  let ccYear = today.getFullYear();
+  let ccMonth = today.getMonth();
+  let cPickStart = null;
+  let cPickEnd = null;
+  let bookedRanges = [];
+  let bookedRangesLoaded = false;
+
+  async function loadBookedRanges() {
+    try {
+      const res = await fetch(API + '/api/bookings');
+      bookedRanges = await res.json();
+    } catch (e) {
+      bookedRanges = [];
     }
-    monthSel.innerHTML = '';
-    MONTHS.forEach((name,i) => { const opt = document.createElement('option'); opt.value = String(i+1).padStart(2,'0'); opt.textContent = name; monthSel.appendChild(opt); });
-    yearSel.innerHTML = '';
-    const thisYear = new Date().getFullYear();
-    for (let y = thisYear; y <= thisYear+3; y++) { const opt = document.createElement('option'); opt.value = String(y); opt.textContent = y; yearSel.appendChild(opt); }
+    bookedRangesLoaded = true;
+    renderCustomCal();
   }
-  fillDateSelects(document.getElementById('cArrDay'), document.getElementById('cArrMonth'), document.getElementById('cArrYear'));
-  fillDateSelects(document.getElementById('cDepDay'), document.getElementById('cDepMonth'), document.getElementById('cDepYear'));
+  function isBookedDate(dateStr) { return bookedRanges.some((r) => dateStr >= r.start && dateStr <= r.end); }
+
+  function renderCustomCal() {
+    ccLabel.textContent = MONTHS[ccMonth] + ' ' + ccYear;
+    ccGrid.innerHTML = '';
+    ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach((d) => {
+      const el = document.createElement('div'); el.className = 'dow'; el.textContent = d; ccGrid.appendChild(el);
+    });
+    const firstWeekday = (new Date(ccYear, ccMonth, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(ccYear, ccMonth + 1, 0).getDate();
+    for (let i = 0; i < firstWeekday; i++) {
+      const el = document.createElement('div'); el.className = 'cday empty'; ccGrid.appendChild(el);
+    }
+    const todayStr = today.toISOString().slice(0, 10);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${ccYear}-${String(ccMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const el = document.createElement('div');
+      el.textContent = d;
+      const blocked = isBookedDate(dateStr) || dateStr < todayStr;
+      let cls = 'cday ' + (blocked ? 'booked' : 'free');
+      if (cPickStart && dateStr === cPickStart) cls += ' picked-start';
+      if (cPickEnd && dateStr === cPickEnd) cls += ' picked-end';
+      if (cPickStart && cPickEnd && dateStr > cPickStart && dateStr < cPickEnd) cls += ' in-range';
+      el.className = cls;
+      if (!blocked) el.addEventListener('click', () => onCustomDayClick(dateStr));
+      ccGrid.appendChild(el);
+    }
+  }
+  function onCustomDayClick(dateStr) {
+    if (!cPickStart || (cPickStart && cPickEnd)) {
+      cPickStart = dateStr; cPickEnd = null;
+      ccHint.textContent = 'Jetzt den letzten Tag anklicken (Abreise).';
+    } else if (dateStr < cPickStart) {
+      cPickStart = dateStr;
+      ccHint.textContent = 'Jetzt den letzten Tag anklicken (Abreise).';
+    } else {
+      cPickEnd = dateStr;
+      ccHint.textContent = `Ausgewählt: ${fmtDate(cPickStart)} – ${fmtDate(cPickEnd)}.`;
+    }
+    renderCustomCal();
+  }
+  ccPrev.addEventListener('click', () => { ccMonth--; if (ccMonth < 0) { ccMonth = 11; ccYear--; } renderCustomCal(); });
+  ccNext.addEventListener('click', () => { ccMonth++; if (ccMonth > 11) { ccMonth = 0; ccYear++; } renderCustomCal(); });
+  renderCustomCal();
+  loadBookedRanges();
 
   let weeks = [];
   let selectedStartIdx = null;
@@ -301,10 +375,8 @@
       const departure = weeks[selectedStartIdx + weekCount - 1].end;
       payload = { type: 'week', arrival, departure, guestName, address, email, numPeople, message, website, agbAccepted };
     } else {
-      const arrival = `${document.getElementById('cArrYear').value}-${document.getElementById('cArrMonth').value}-${document.getElementById('cArrDay').value}`;
-      const departure = `${document.getElementById('cDepYear').value}-${document.getElementById('cDepMonth').value}-${document.getElementById('cDepDay').value}`;
-      if (arrival >= departure) { showStatus('Die Abreise muss nach der Anreise liegen.', false); return; }
-      payload = { type: 'custom', arrival, departure, guestName, address, email, numPeople, message, website, agbAccepted };
+      if (!cPickStart || !cPickEnd) { showStatus('Bitte Anreise- und Abreisedatum im Kalender auswählen.', false); return; }
+      payload = { type: 'custom', arrival: cPickStart, departure: cPickEnd, guestName, address, email, numPeople, message, website, agbAccepted };
     }
 
     const btn = document.getElementById('submitBtn');

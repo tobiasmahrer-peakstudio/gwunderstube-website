@@ -196,13 +196,14 @@ async function handleCreateRequest(request, env) {
     return err('Ungültiger Zeitraum.');
   }
 
+  const { booked, pending } = await getOccupiedSpans(env);
+  if (isOccupied(arrival, departure, booked) || isOccupied(arrival, departure, pending)) {
+    return err('Dieser Zeitraum ist leider nicht mehr verfügbar.');
+  }
+
   let weeklyPrice = null;
   if (!isCustom) {
-    // Validate it's a whole number of Sat-to-Sat weeks and not already taken.
-    const { booked, pending } = await getOccupiedSpans(env);
-    if (isOccupied(arrival, departure, booked) || isOccupied(arrival, departure, pending)) {
-      return err('Dieser Zeitraum ist leider nicht mehr verfügbar.');
-    }
+    // Validate it's a whole number of Sat-to-Sat weeks.
     let cursor = arrival;
     let total = 0;
     let weeks = 0;
