@@ -283,6 +283,19 @@ async function handleDecision(request, env, id) {
   return json({ ok: true, invoiceNumber });
 }
 
+async function handleRegenerate(request, env, id) {
+  if (!isAuthorized(request, env)) return err('Unauthorized', 401);
+  const stays = await readJSON(env, 'stays', []);
+  const stay = stays.find((s) => s.id === id);
+  if (!stay) return err('Nicht gefunden', 404);
+  if (stay.status !== 'confirmed') return err('Nur bestätigte Aufenthalte haben ein Dokument.');
+
+  const settings = await readJSON(env, 'settings', DEFAULT_SETTINGS);
+  const documentBytes = await buildBookingDocumentPdf(stay, settings);
+  await env.BOOKINGS.put(`pdf:document:${stay.id}`, documentBytes);
+  return json({ ok: true });
+}
+
 async function handlePdf(env, id) {
   const bytes = await env.BOOKINGS.get(`pdf:document:${id}`, 'arrayBuffer');
   if (!bytes) return err('PDF nicht gefunden', 404);
@@ -404,6 +417,10 @@ export default {
     if (pdfMatch && request.method === 'GET') {
       if (!isAuthorized(request, env)) return err('Unauthorized', 401);
       return handlePdf(env, pdfMatch[1]);
+    }
+    const regenMatch = path.match(/^\/api\/stays\/([a-f0-9-]+)\/regenerate$/);
+    if (regenMatch && request.method === 'POST') {
+      return handleRegenerate(request, env, regenMatch[1]);
     }
 
     return new Response('Not found', { status: 404, headers });

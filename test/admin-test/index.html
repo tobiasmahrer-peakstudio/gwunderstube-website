@@ -111,6 +111,16 @@
 
   .approve-form{display:none; margin-top:0.8rem; padding-top:0.8rem; border-top:1px dashed var(--cream-2); width:100%;}
   .approve-form.open{display:block;}
+
+  details.archive summary{
+    cursor:pointer; font-family:'Playfair Display', serif; font-size:1.15rem; color:var(--bark);
+    list-style:none; display:flex; align-items:center; gap:0.5rem;
+  }
+  details.archive summary::-webkit-details-marker{display:none;}
+  details.archive summary::before{content:'▸'; color:var(--gold); transition:transform .2s ease;}
+  details.archive[open] summary::before{transform:rotate(90deg);}
+  details.archive #archiveCount{font-family:'Nunito Sans', sans-serif; font-size:0.8rem; color:var(--walnut-2); font-weight:700;}
+  .regen-btn{font-size:0.72rem; color:var(--walnut-2); background:none; border:none; text-decoration:underline; cursor:pointer; font-family:inherit; padding:0;}
   .extra-cost-row{display:grid; grid-template-columns:1fr 100px auto; gap:0.5rem; margin-bottom:0.5rem;}
 </style>
 </head>
@@ -219,9 +229,13 @@
     <div class="section" id="secStays">
       <p style="color:var(--walnut-2);">Bestätigte Aufenthalte mit Buchungsbestätigung &amp; Rechnung als ein Dokument.</p>
       <div class="card">
-        <h3>Bestätigte Aufenthalte</h3>
+        <h3>Kommende Aufenthalte</h3>
         <ul class="item-list" id="staysList"></ul>
       </div>
+      <details class="card archive">
+        <summary>Archiv – vergangene Aufenthalte <span id="archiveCount"></span></summary>
+        <ul class="item-list" id="archiveList" style="margin-top:1rem;"></ul>
+      </details>
     </div>
 
     <!-- ===================== PREISE ===================== -->
@@ -521,7 +535,12 @@
     // don't treat it as a blocked popup once we fill it in after the fetch.
     const tab = window.open('', '_blank');
     try {
-      const res = await fetch(`${API}/api/stays/${id}/document.pdf`, { headers: authHeaders() });
+      let res = await fetch(`${API}/api/stays/${id}/document.pdf`, { headers: authHeaders() });
+      if (res.status === 404) {
+        // Stay was confirmed before the current document format existed — build it now.
+        await fetch(`${API}/api/stays/${id}/regenerate`, { method: 'POST', headers: authHeaders() });
+        res = await fetch(`${API}/api/stays/${id}/document.pdf`, { headers: authHeaders() });
+      }
       if (!res.ok) { if (tab) tab.close(); alert('PDF konnte nicht geladen werden.'); return; }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -648,8 +667,7 @@
     });
     if (decided.length === 0) decidedList.innerHTML = '<li>Noch keine abgelehnten Anfragen.</li>';
 
-    staysList.innerHTML = '';
-    confirmed.forEach((s) => {
+    function buildStayRow(s) {
       const li = document.createElement('li');
       const info = document.createElement('div');
       info.className = 'item-info';
@@ -664,9 +682,23 @@
       actions.appendChild(docBtn);
       li.appendChild(info);
       li.appendChild(actions);
-      staysList.appendChild(li);
-    });
-    if (confirmed.length === 0) staysList.innerHTML = '<li>Noch keine bestätigten Aufenthalte.</li>';
+      return li;
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const upcoming = confirmed.filter(s => s.departure >= todayStr);
+    const past = confirmed.filter(s => s.departure < todayStr).sort((a, b) => b.arrival.localeCompare(a.arrival));
+
+    staysList.innerHTML = '';
+    upcoming.forEach((s) => staysList.appendChild(buildStayRow(s)));
+    if (upcoming.length === 0) staysList.innerHTML = '<li>Keine kommenden Aufenthalte.</li>';
+
+    const archiveList = document.getElementById('archiveList');
+    const archiveCount = document.getElementById('archiveCount');
+    archiveCount.textContent = past.length ? `(${past.length})` : '(0)';
+    archiveList.innerHTML = '';
+    past.forEach((s) => archiveList.appendChild(buildStayRow(s)));
+    if (past.length === 0) archiveList.innerHTML = '<li>Noch keine vergangenen Aufenthalte.</li>';
   }
 
   // =====================================================================
