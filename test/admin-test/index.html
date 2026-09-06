@@ -21,7 +21,16 @@
   .brand{font-family:'Poppins', sans-serif; font-weight:600; font-size:1.1rem; padding:1.2rem 1.5rem; border-bottom:1px solid rgba(61,43,32,0.08); display:flex; align-items:center;}
   .brand span{color:var(--moss);}
   .testbadge{display:inline-block; background:#c1543f; color:#fff; font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; padding:0.2rem 0.6rem; border-radius:20px; margin-left:0.6rem;}
-  .wrap{max-width:760px; margin:0 auto; padding:3rem 1.5rem;}
+  .wrap{max-width:1100px; margin:0 auto; padding:3rem 1.5rem;}
+
+  .ranges-layout{display:grid; grid-template-columns:380px 1fr; gap:1.5rem; align-items:start;}
+  .ranges-add-col{position:sticky; top:1.5rem;}
+  .ranges-list-col .card{max-height:75vh; overflow-y:auto;}
+  @media (max-width:820px){
+    .ranges-layout{grid-template-columns:1fr;}
+    .ranges-add-col{position:static;}
+    .ranges-list-col .card{max-height:none; overflow-y:visible;}
+  }
 
   .card{background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:2rem; margin-bottom:1.5rem;}
   label{display:block; font-weight:700; font-size:0.85rem; margin-bottom:0.4rem; color:var(--walnut-2);}
@@ -159,66 +168,74 @@
     <!-- ===================== ZEITRÄUME (unverändert aus dem produktiven Admin) ===================== -->
     <div class="section active" id="secRanges">
       <p style="color:var(--walnut-2);">Hier siehst du alle aktuell belegten Zeiträume fürs Gwunderstübli. Namen sind nur hier sichtbar, nie auf der Website.</p>
-      <div class="card">
-        <h3>Aktuelle Zeiträume</h3>
-        <ul class="range-list" id="rangeList"></ul>
 
-        <div class="add-row">
-          <div>
-            <label>Von</label>
-            <div class="date-fields">
-              <select id="startDay"></select>
-              <select id="startMonth"></select>
-              <select id="startYear"></select>
-            </div>
-          </div>
-          <div>
-            <label>Bis</label>
-            <div class="date-fields">
-              <select id="endDay"></select>
-              <select id="endMonth"></select>
-              <select id="endYear"></select>
-            </div>
-          </div>
-          <div>
-            <label for="newName">Name (nur intern sichtbar)</label>
-            <input type="text" id="newName" placeholder="z.B. Familie Muster">
-          </div>
-          <div>
-            <label for="newNote">Notiz (optional, nur intern sichtbar)</label>
-            <textarea id="newNote" placeholder="z.B. Anreise verspätet sich, Hund dabei, …"></textarea>
-          </div>
-
-          <div>
-            <button type="button" class="cal-toggle" id="calToggle">📅 Kalender öffnen</button>
-            <div class="cal-panel" id="calPanel">
-              <div class="cal-panel-head">
-                <button type="button" id="cPrev">‹</button>
-                <span class="cal-panel-label" id="cLabel"></span>
-                <button type="button" id="cNext">›</button>
+      <div class="ranges-layout">
+        <div class="ranges-add-col card">
+          <h3>Neuer Zeitraum</h3>
+          <div class="add-row">
+            <div>
+              <label>Von</label>
+              <div class="date-fields">
+                <select id="startDay"></select>
+                <select id="startMonth"></select>
+                <select id="startYear"></select>
               </div>
-              <div class="cal-panel-grid" id="cGrid"></div>
-              <div class="cal-legend">
-                <span><span class="cdot booked"></span>Bereits belegt</span>
-                <span><span class="cdot picked"></span>Ausgewählt</span>
-              </div>
-              <p class="hint" id="cHint">Ersten Tag anklicken (Von), dann letzten Tag (Bis).</p>
             </div>
+            <div>
+              <label>Bis</label>
+              <div class="date-fields">
+                <select id="endDay"></select>
+                <select id="endMonth"></select>
+                <select id="endYear"></select>
+              </div>
+            </div>
+            <div>
+              <label for="newName">Name (nur intern sichtbar)</label>
+              <input type="text" id="newName" placeholder="z.B. Familie Muster">
+            </div>
+            <div>
+              <label for="newNote">Notiz (optional, nur intern sichtbar)</label>
+              <textarea id="newNote" placeholder="z.B. Anreise verspätet sich, Hund dabei, …"></textarea>
+            </div>
+
+            <div>
+              <button type="button" class="cal-toggle" id="calToggle">📅 Kalender öffnen</button>
+              <div class="cal-panel" id="calPanel">
+                <div class="cal-panel-head">
+                  <button type="button" id="cPrev">‹</button>
+                  <span class="cal-panel-label" id="cLabel"></span>
+                  <button type="button" id="cNext">›</button>
+                </div>
+                <div class="cal-panel-grid" id="cGrid"></div>
+                <div class="cal-legend">
+                  <span><span class="cdot booked"></span>Bereits belegt</span>
+                  <span><span class="cdot picked"></span>Ausgewählt</span>
+                </div>
+                <p class="hint" id="cHint">Ersten Tag anklicken (Von), dann letzten Tag (Bis).</p>
+              </div>
+            </div>
+
+            <button class="btn btn-secondary" id="addBtn">+ Hinzufügen</button>
           </div>
 
-          <button class="btn btn-secondary" id="addBtn">+ Hinzufügen</button>
+          <div class="actions-row">
+            <button class="btn btn-primary" id="saveBtn">Speichern &amp; live schalten</button>
+          </div>
+          <p class="status" id="status"></p>
         </div>
 
-        <div class="actions-row">
-          <button class="btn btn-primary" id="saveBtn">Speichern &amp; live schalten</button>
+        <div class="ranges-list-col">
+          <div class="card">
+            <h3>Aktuelle Zeiträume</h3>
+            <ul class="range-list" id="rangeList"></ul>
+          </div>
+
+          <details class="card archive">
+            <summary>Archiv – vergangene Zeiträume <span id="rangeArchiveCount"></span></summary>
+            <ul class="range-list" id="rangeArchiveList" style="margin-top:1rem;"></ul>
+          </details>
         </div>
-        <p class="status" id="status"></p>
       </div>
-
-      <details class="card archive">
-        <summary>Archiv – vergangene Zeiträume <span id="rangeArchiveCount"></span></summary>
-        <ul class="range-list" id="rangeArchiveList" style="margin-top:1rem;"></ul>
-      </details>
     </div>
 
     <!-- ===================== ANFRAGEN ===================== -->
