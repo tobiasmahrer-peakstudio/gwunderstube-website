@@ -18,7 +18,7 @@
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Nunito Sans', sans-serif; color:var(--text); background:var(--cream); line-height:1.6;}
   h1,h2,h3{font-family:'Playfair Display', serif; color:var(--bark); line-height:1.2; margin:0 0 0.4rem;}
-  .brand{font-family:'Poppins', sans-serif; font-weight:600; font-size:1.1rem; padding:1.2rem 1.5rem; border-bottom:1px solid rgba(61,43,32,0.08); display:flex; align-items:center;}
+  .brand{font-family:'Poppins', sans-serif; font-weight:600; font-size:1.1rem; padding:1.2rem 1.5rem; border-bottom:1px solid rgba(61,43,32,0.08);}
   .brand span{color:var(--moss);}
   .testbadge{display:inline-block; background:#c1543f; color:#fff; font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; padding:0.2rem 0.6rem; border-radius:20px; margin-left:0.6rem;}
   .wrap{max-width:1100px; margin:0 auto; padding:3rem 1.5rem;}
@@ -85,6 +85,10 @@
   .range-note{font-size:0.82rem; color:var(--walnut-2); font-style:italic;}
   .item-meta{font-size:0.82rem; color:var(--walnut-2);}
   .item-actions{display:flex; gap:0.5rem; flex-shrink:0; flex-wrap:wrap;}
+  @media (max-width:480px){
+    .range-list li, .item-list li, .stay-summary{flex-direction:column; align-items:stretch;}
+    .item-actions{margin-top:0.6rem;}
+  }
 
   .add-row{display:flex; flex-direction:column; gap:1.2rem; margin-top:1.5rem;}
   .actions-row{display:flex; gap:1rem; margin-top:2rem; align-items:center; flex-wrap:wrap;}
