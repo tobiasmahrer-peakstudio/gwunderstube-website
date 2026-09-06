@@ -665,7 +665,7 @@
       const actions = document.createElement('div');
       actions.className = 'item-actions';
       const approveBtn = document.createElement('button');
-      approveBtn.className = 'btn-ok'; approveBtn.textContent = 'Annehmen';
+      approveBtn.className = 'btn-ok'; approveBtn.textContent = 'Preis festlegen';
       const rejectBtn = document.createElement('button');
       rejectBtn.className = 'btn-danger'; rejectBtn.textContent = 'Ablehnen';
 
@@ -686,6 +686,7 @@
       const form = document.createElement('div');
       form.className = 'approve-form';
       form.innerHTML = `
+        <p class="hint" style="margin-top:0;">Die Anfrage ist noch nicht angenommen – erst mit dem Button unten wird sie bestätigt und die Rechnung erstellt.</p>
         <div class="field">
           <label>Preis Aufenthalt (CHF)</label>
           <input type="number" class="approvePrice" value="${suggestedPrice ?? ''}" min="0" step="10">
@@ -694,7 +695,7 @@
         <div class="extraCostsWrap"></div>
         <button type="button" class="btn-small addExtraCost">+ Zusatzkosten</button>
         <div style="margin-top:0.8rem;">
-          <button type="button" class="btn btn-primary confirmApprove">Bestätigen &amp; Rechnung erstellen</button>
+          <button type="button" class="btn btn-primary confirmApprove">Anfrage annehmen &amp; Rechnung erstellen</button>
         </div>
       `;
       const extraWrap = form.querySelector('.extraCostsWrap');
