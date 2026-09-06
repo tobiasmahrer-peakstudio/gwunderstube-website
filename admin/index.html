@@ -72,6 +72,14 @@
     padding:0.9rem 0; border-bottom:1px solid var(--cream-2); font-size:0.95rem;
   }
   .range-list li:last-child, .item-list li:last-child{border-bottom:none;}
+  .item-list li.stay-row{display:block; cursor:pointer;}
+  .stay-summary{display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;}
+  .stay-toggle-icon{display:inline-block; color:var(--gold); font-size:0.75rem; margin-left:0.4rem; transition:transform .2s ease;}
+  .stay-row.open .stay-toggle-icon{transform:rotate(90deg);}
+  .stay-details{display:none; margin-top:0.9rem; padding-top:0.9rem; border-top:1px dashed var(--cream-2); font-size:0.9rem; color:var(--walnut-2); cursor:default;}
+  .stay-row.open .stay-details{display:block;}
+  .stay-details p{margin:0 0 0.5rem;}
+  .stay-details strong{color:var(--walnut);}
   .range-info, .item-info{display:flex; flex-direction:column; gap:0.15rem;}
   .range-name{font-size:0.82rem; color:var(--moss-dark); font-weight:700;}
   .range-note{font-size:0.82rem; color:var(--walnut-2); font-style:italic;}
@@ -819,19 +827,56 @@
 
     function buildStayRow(s) {
       const li = document.createElement('li');
+      li.className = 'stay-row';
+
+      const summary = document.createElement('div');
+      summary.className = 'stay-summary';
       const info = document.createElement('div');
       info.className = 'item-info';
-      info.innerHTML = `<strong>${s.guestName}</strong>
+      info.innerHTML = `<strong>${s.guestName} <span class="stay-toggle-icon">▸</span></strong>
         <span class="item-meta">${formatDateDisplay(s.arrival)} – ${formatDateDisplay(s.departure)} · ${s.numPeople} Pers.</span>
         <span class="item-meta">Rechnung ${s.invoiceNumber} · Total CHF ${s.total}.–</span>`;
       const actions = document.createElement('div');
       actions.className = 'item-actions';
       const docBtn = document.createElement('button');
       docBtn.className = 'btn-small'; docBtn.textContent = '📄 Dokument';
-      docBtn.addEventListener('click', () => openPdf(s.id));
+      docBtn.addEventListener('click', (e) => { e.stopPropagation(); openPdf(s.id); });
       actions.appendChild(docBtn);
-      li.appendChild(info);
-      li.appendChild(actions);
+      summary.appendChild(info);
+      summary.appendChild(actions);
+      summary.addEventListener('click', () => li.classList.toggle('open'));
+
+      const extraCostsText = (s.extraCosts && s.extraCosts.length)
+        ? ' + ' + s.extraCosts.map((c) => `${c.label}: CHF ${c.amount}.–`).join(', ')
+        : '';
+      const details = document.createElement('div');
+      details.className = 'stay-details';
+      details.innerHTML = `
+        <p><strong>Adresse:</strong> ${s.address ? s.address.replace(/\n/g, ', ') : '–'}</p>
+        <p><strong>E-Mail:</strong> ${s.email || '–'}</p>
+        <p><strong>Preis:</strong> CHF ${s.weeklyPrice ?? '–'}.–${extraCostsText} = <strong>CHF ${s.total}.–</strong></p>
+        <p><strong>Notiz:</strong> <span class="stay-note-text">${s.message ? s.message : '–'}</span></p>
+      `;
+      const editNoteBtn = document.createElement('button');
+      editNoteBtn.className = 'btn-small';
+      editNoteBtn.textContent = '✏️ Notiz bearbeiten';
+      editNoteBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const updated = prompt('Notiz für diesen Aufenthalt:', s.message || '');
+        if (updated === null) return;
+        const res = await fetch(`${API}/api/stays/${s.id}/note`, {
+          method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ message: updated.trim() }),
+        });
+        if (res.ok) {
+          s.message = updated.trim();
+          details.querySelector('.stay-note-text').textContent = s.message ? s.message : '–';
+        }
+      });
+      details.appendChild(editNoteBtn);
+
+      li.appendChild(summary);
+      li.appendChild(details);
       return li;
     }
 

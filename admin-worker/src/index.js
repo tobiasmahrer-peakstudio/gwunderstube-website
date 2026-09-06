@@ -387,6 +387,22 @@ async function handleManualStay(request, env) {
   return json({ ok: true, invoiceNumber, weeklyPrice, total });
 }
 
+async function handleUpdateNote(request, env, id) {
+  if (!isAuthorized(request, env)) return err('Unauthorized', 401);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return err('Invalid JSON');
+  }
+  const stays = await readJSON(env, 'stays', []);
+  const stay = stays.find((s) => s.id === id);
+  if (!stay) return err('Nicht gefunden', 404);
+  stay.message = String(body.message || '').trim().slice(0, 2000);
+  await writeJSON(env, 'stays', stays);
+  return json({ ok: true });
+}
+
 async function handleRegenerate(request, env, id) {
   if (!isAuthorized(request, env)) return err('Unauthorized', 401);
   const stays = await readJSON(env, 'stays', []);
@@ -541,6 +557,10 @@ export default {
     const regenMatch = path.match(/^\/api\/stays\/([a-f0-9-]+)\/regenerate$/);
     if (regenMatch && request.method === 'POST') {
       return handleRegenerate(request, env, regenMatch[1]);
+    }
+    const noteMatch = path.match(/^\/api\/stays\/([a-f0-9-]+)\/note$/);
+    if (noteMatch && request.method === 'PUT') {
+      return handleUpdateNote(request, env, noteMatch[1]);
     }
 
     return new Response('Not found', { status: 404, headers });
