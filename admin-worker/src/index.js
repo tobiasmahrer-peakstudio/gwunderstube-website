@@ -114,6 +114,30 @@ async function priceForWeek(env, weekStart) {
   return computeWeekPrice(pricing, weekStart);
 }
 
+// Best-effort price for an arbitrary arrival/departure span: the short-stay table for
+// 1-6 nights, or the sum of week prices for an exact multiple of 7 nights. Anything
+// else (an odd span that fits neither pattern) returns null so the admin sets it by hand.
+async function computeStayPrice(env, arrival, departure) {
+  const nights = Math.round((new Date(departure) - new Date(arrival)) / 86400000);
+  if (nights < 1) return null;
+  const pricing = await readJSON(env, 'weekPricing', DEFAULT_WEEK_PRICING);
+  if (nights <= 6) {
+    const season = isWinterMonth(arrival) ? 'winter' : 'summer';
+    const table = pricing.shortStay && pricing.shortStay[season];
+    return table && table[nights - 1] !== undefined ? table[nights - 1] : null;
+  }
+  if (nights % 7 === 0) {
+    let total = 0;
+    let cursor = arrival;
+    for (let i = 0; i < nights / 7; i++) {
+      total += computeWeekPrice(pricing, cursor);
+      cursor = addDays(cursor, 7);
+    }
+    return total;
+  }
+  return null;
+}
+
 async function handleWeeks(request, env) {
   const url = new URL(request.url);
   const count = Math.min(parseInt(url.searchParams.get('weeks') || '52', 10) || 52, 104);
@@ -283,6 +307,85 @@ async function handleDecision(request, env, id) {
   return json({ ok: true, invoiceNumber });
 }
 
+// Arma entering a booking directly (phone/in person) — creates a confirmed stay with
+// invoice + document right away, same as approving a guest request, just without the
+// pending step. Reuses the same overlap check against existing bookings.
+async function handleManualStay(request, env) {
+  if (!isAuthorized(request, env)) return err('Unauthorized', 401);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return err('Invalid JSON');
+  }
+
+  const guestName = String(body.guestName || '').trim().slice(0, 200);
+  const address = String(body.address || '').trim().slice(0, 500);
+  const email = String(body.email || '').trim().slice(0, 200);
+  const numPeople = Math.max(1, Math.min(20, parseInt(body.numPeople, 10) || 2));
+  const message = String(body.message || '').trim().slice(0, 2000);
+  const arrival = body.arrival;
+  const departure = body.departure;
+
+  if (!guestName) return err('Bitte einen Namen angeben.');
+  if (!DATE_RE.test(arrival) || !DATE_RE.test(departure) || arrival >= departure) {
+    return err('Ungültiger Zeitraum.');
+  }
+
+  const { booked } = await getOccupiedSpans(env);
+  if (isOccupied(arrival, departure, booked)) {
+    return err('Dieser Zeitraum ist bereits belegt.');
+  }
+
+  let weeklyPrice = typeof body.weeklyPrice === 'number' ? body.weeklyPrice : await computeStayPrice(env, arrival, departure);
+  if (typeof weeklyPrice !== 'number' || weeklyPrice < 0) {
+    return err('Preis konnte nicht automatisch berechnet werden. Bitte manuell angeben.');
+  }
+  const extraCosts = Array.isArray(body.extraCosts)
+    ? body.extraCosts
+        .filter((c) => c && typeof c.label === 'string' && typeof c.amount === 'number')
+        .map((c) => ({ label: c.label.slice(0, 200), amount: c.amount }))
+    : [];
+  const total = weeklyPrice + extraCosts.reduce((sum, c) => sum + c.amount, 0);
+
+  const counter = (await readJSON(env, 'invoiceCounter', 0)) + 1;
+  await writeJSON(env, 'invoiceCounter', counter);
+  const settings = await readJSON(env, 'settings', DEFAULT_SETTINGS);
+  const invoiceNumber = `${settings.invoicePrefix || ''}${String(counter).padStart(4, '0')}`;
+
+  const stay = {
+    id: crypto.randomUUID(),
+    status: 'confirmed',
+    guestName,
+    address,
+    email,
+    arrival,
+    departure,
+    numPeople,
+    isCustomRequest: Math.round((new Date(departure) - new Date(arrival)) / 86400000) <= 6,
+    weeklyPrice,
+    extraCosts,
+    total,
+    invoiceNumber,
+    message,
+    createdAt: new Date().toISOString(),
+    decidedAt: new Date().toISOString(),
+  };
+
+  const stays = await readJSON(env, 'stays', []);
+  stays.push(stay);
+  await writeJSON(env, 'stays', stays);
+
+  const ranges = await readJSON(env, 'ranges', []);
+  ranges.push({ start: arrival, end: addDays(departure, -1), name: guestName });
+  await writeJSON(env, 'ranges', ranges);
+
+  const documentBytes = await buildBookingDocumentPdf(stay, settings);
+  await env.BOOKINGS.put(`pdf:document:${stay.id}`, documentBytes);
+
+  return json({ ok: true, invoiceNumber, weeklyPrice, total });
+}
+
 async function handleRegenerate(request, env, id) {
   if (!isAuthorized(request, env)) return err('Unauthorized', 401);
   const stays = await readJSON(env, 'stays', []);
@@ -413,6 +516,9 @@ export default {
     if (path === '/api/stays/full' && request.method === 'GET') {
       if (!isAuthorized(request, env)) return err('Unauthorized', 401);
       return json(await readJSON(env, 'stays', []));
+    }
+    if (path === '/api/stays/manual' && request.method === 'POST') {
+      return handleManualStay(request, env);
     }
     const decisionMatch = path.match(/^\/api\/stays\/([a-f0-9-]+)\/decision$/);
     if (decisionMatch && request.method === 'POST') {

@@ -20,6 +20,7 @@
   h1,h2,h3{font-family:'Playfair Display', serif; color:var(--bark); line-height:1.2; margin:0 0 0.4rem;}
   .brand{font-family:'Poppins', sans-serif; font-weight:600; font-size:1.1rem; padding:1.2rem 1.5rem; border-bottom:1px solid rgba(61,43,32,0.08); display:flex; align-items:center;}
   .brand span{color:var(--moss);}
+  .testbadge{display:inline-block; background:#c1543f; color:#fff; font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; padding:0.2rem 0.6rem; border-radius:20px; margin-left:0.6rem;}
   .wrap{max-width:1100px; margin:0 auto; padding:3rem 1.5rem;}
 
   .ranges-layout{display:grid; grid-template-columns:380px 1fr; gap:1.5rem; align-items:start;}
@@ -161,7 +162,6 @@
       <button type="button" class="tab-btn" data-section="secRequests">Anfragen <span id="pendingCount"></span></button>
       <button type="button" class="tab-btn" data-section="secStays">Aufenthalte</button>
       <button type="button" class="tab-btn" data-section="secPricing">Preise</button>
-      <button type="button" class="tab-btn" data-section="secSettings">Einstellungen</button>
     </div>
 
     <!-- ===================== ZEITRÄUME (unverändert aus dem produktiven Admin) ===================== -->
@@ -170,7 +170,8 @@
 
       <div class="ranges-layout">
         <div class="ranges-add-col card">
-          <h3>Neuer Zeitraum</h3>
+          <h3>Neue Buchung erfassen</h3>
+          <p class="hint" style="margin-top:-0.5rem; margin-bottom:1rem;">Für eine vollwertige Buchung inkl. Rechnung/Bestätigung bitte Adresse, Personenzahl und Preis mit angeben.</p>
           <div class="add-row">
             <div>
               <label>Von</label>
@@ -187,14 +188,6 @@
                 <select id="endMonth"></select>
                 <select id="endYear"></select>
               </div>
-            </div>
-            <div>
-              <label for="newName">Name (nur intern sichtbar)</label>
-              <input type="text" id="newName" placeholder="z.B. Familie Muster">
-            </div>
-            <div>
-              <label for="newNote">Notiz (optional, nur intern sichtbar)</label>
-              <textarea id="newNote" placeholder="z.B. Anreise verspätet sich, Hund dabei, …"></textarea>
             </div>
 
             <div>
@@ -214,11 +207,37 @@
               </div>
             </div>
 
-            <button class="btn btn-secondary" id="addBtn">+ Hinzufügen</button>
-          </div>
+            <div>
+              <label for="newName">Name</label>
+              <input type="text" id="newName" placeholder="z.B. Familie Muster">
+            </div>
+            <div>
+              <label for="newAddress">Adresse</label>
+              <textarea id="newAddress" placeholder="Strasse, PLZ, Ort"></textarea>
+            </div>
+            <div>
+              <label for="newEmail">E-Mail (optional)</label>
+              <input type="email" id="newEmail">
+            </div>
+            <div>
+              <label for="newPeople">Anzahl Personen</label>
+              <input type="number" id="newPeople" min="1" max="20" value="2">
+            </div>
+            <div>
+              <label for="newPrice">Preis Aufenthalt (CHF)</label>
+              <input type="number" id="newPrice" min="0" step="10">
+              <p class="hint" id="priceHint"></p>
+            </div>
+            <div>
+              <div id="newExtraCostsWrap"></div>
+              <button type="button" class="btn-small" id="newAddExtraCost">+ Zusatzkosten</button>
+            </div>
+            <div>
+              <label for="newNote">Notiz (optional, nur intern sichtbar)</label>
+              <textarea id="newNote" placeholder="z.B. Anreise verspätet sich, Hund dabei, …"></textarea>
+            </div>
 
-          <div class="actions-row">
-            <button class="btn btn-primary" id="saveBtn">Speichern &amp; live schalten</button>
+            <button class="btn btn-primary" id="addBtn">Buchung erfassen &amp; Dokument erstellen</button>
           </div>
           <p class="status" id="status"></p>
         </div>
@@ -295,24 +314,6 @@
       </div>
     </div>
 
-    <!-- ===================== EINSTELLUNGEN ===================== -->
-    <div class="section" id="secSettings">
-      <p style="color:var(--walnut-2);">Diese Angaben erscheinen auf der Buchungsbestätigung &amp; Rechnung.</p>
-      <div class="card">
-        <div class="field"><label for="setCompanyName">Firmenname</label><input type="text" id="setCompanyName"></div>
-        <div class="field"><label for="setCompanyAddress">Adresse</label><textarea id="setCompanyAddress"></textarea></div>
-        <div class="field"><label for="setAccountHolder">Kontoinhaber</label><input type="text" id="setAccountHolder"></div>
-        <div class="field"><label for="setIban">IBAN</label><input type="text" id="setIban"></div>
-        <div class="field"><label for="setPaymentTerms">Zahlungsfrist (Tage)</label><input type="number" id="setPaymentTerms" min="0"></div>
-        <div class="field"><label for="setInvoicePrefix">Rechnungsnummer-Präfix</label><input type="text" id="setInvoicePrefix" placeholder="z.B. 2026-"></div>
-        <div class="field"><label for="setVat">MWST-Satz (%, 0 = keine)</label><input type="number" id="setVat" min="0" step="0.1"></div>
-        <div class="actions-row">
-          <button class="btn btn-primary" id="saveSettingsBtn">Einstellungen speichern</button>
-        </div>
-        <p class="status" id="settingsStatus"></p>
-      </div>
-    </div>
-
     <div class="actions-row">
       <button class="logout" id="logoutBtn">Abmelden</button>
     </div>
@@ -361,10 +362,15 @@
   // =====================================================================
   const rangeList = document.getElementById('rangeList');
   const addBtn = document.getElementById('addBtn');
-  const saveBtn = document.getElementById('saveBtn');
   const statusEl = document.getElementById('status');
   const newName = document.getElementById('newName');
   const newNote = document.getElementById('newNote');
+  const newAddress = document.getElementById('newAddress');
+  const newEmail = document.getElementById('newEmail');
+  const newPeople = document.getElementById('newPeople');
+  const newPrice = document.getElementById('newPrice');
+  const priceHint = document.getElementById('priceHint');
+  const newExtraCostsWrap = document.getElementById('newExtraCostsWrap');
   const startDay = document.getElementById('startDay');
   const startMonth = document.getElementById('startMonth');
   const startYear = document.getElementById('startYear');
@@ -433,19 +439,22 @@
     const noteBtn = document.createElement('button');
     noteBtn.className = 'btn-small';
     noteBtn.textContent = r.note ? 'Notiz bearbeiten' : '+ Notiz';
-    noteBtn.addEventListener('click', () => {
+    noteBtn.addEventListener('click', async () => {
       const updated = prompt('Notiz für diesen Zeitraum:', r.note || '');
       if (updated === null) return;
       r.note = updated.trim();
       renderList();
+      await saveRangesToServer();
     });
     const delBtn = document.createElement('button');
     delBtn.className = 'btn btn-danger';
     delBtn.textContent = 'Entfernen';
-    delBtn.addEventListener('click', () => {
+    delBtn.addEventListener('click', async () => {
+      if (!confirm('Diesen Zeitraum wirklich entfernen?')) return;
       ranges = ranges.filter((x) => x !== r);
       renderList();
       renderCal();
+      await saveRangesToServer();
     });
     const actions = document.createElement('div');
     actions.className = 'item-actions';
@@ -489,33 +498,105 @@
     renderCal();
   }
 
-  addBtn.addEventListener('click', () => {
-    const start = selectsToDateStr(startDay, startMonth, startYear);
-    const end = selectsToDateStr(endDay, endMonth, endYear);
-    if (!isValidDate(start) || !isValidDate(end)) { showStatus(statusEl, 'Ungültiges Datum.', false); return; }
-    if (start > end) { showStatus(statusEl, 'Das Startdatum muss vor dem Enddatum liegen.', false); return; }
-    ranges.push({ start, end, name: newName.value.trim(), note: newNote.value.trim() });
-    newName.value = '';
-    newNote.value = '';
-    pickStart = null; pickEnd = null;
-    renderList(); renderCal();
-    statusEl.style.display = 'none';
-  });
-
-  saveBtn.addEventListener('click', async () => {
-    saveBtn.disabled = true;
+  async function saveRangesToServer() {
     try {
       const res = await fetch(API + '/api/bookings', {
         method: 'POST',
         headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(ranges),
       });
-      if (res.ok) showStatus(statusEl, 'Gespeichert – die Testseite zeigt die neue Belegung sofort an.', true);
+      if (res.ok) showStatus(statusEl, 'Gespeichert.', true);
       else showStatus(statusEl, 'Fehler beim Speichern.', false);
     } catch (e) {
       showStatus(statusEl, 'Verbindungsfehler beim Speichern.', false);
+    }
+  }
+
+  function addNewExtraRow(label = '', amount = '') {
+    const row = document.createElement('div');
+    row.className = 'extra-cost-row';
+    row.innerHTML = `<input type="text" placeholder="Bezeichnung" class="ecLabel" value="${label}">
+      <input type="number" placeholder="CHF" class="ecAmount" value="${amount}">
+      <button type="button" class="btn-small ecRemove">×</button>`;
+    row.querySelector('.ecRemove').addEventListener('click', () => row.remove());
+    newExtraCostsWrap.appendChild(row);
+  }
+  document.getElementById('newAddExtraCost').addEventListener('click', () => addNewExtraRow());
+
+  async function suggestPrice() {
+    const start = selectsToDateStr(startDay, startMonth, startYear);
+    const end = selectsToDateStr(endDay, endMonth, endYear);
+    if (!isValidDate(start) || !isValidDate(end) || start >= end) { priceHint.textContent = ''; return; }
+    const nights = Math.round((new Date(end) - new Date(start)) / 86400000);
+    if (!weekPricing.shortStay) return;
+    let suggested = null;
+    if (nights >= 1 && nights <= 6) {
+      const season = isWinterMonth(start) ? 'winter' : 'summer';
+      suggested = weekPricing.shortStay[season][nights - 1];
+    } else if (nights > 0 && nights % 7 === 0) {
+      let total = 0, cursor = start;
+      for (let i = 0; i < nights / 7; i++) {
+        const seasonWk = isWinterMonth(cursor) ? 'winter' : 'summer';
+        total += seasonWk === 'winter' ? weekPricing.winterPrice : weekPricing.summerPrice;
+        cursor = new Date(new Date(cursor).getTime() + 7 * 86400000).toISOString().slice(0, 10);
+      }
+      suggested = total;
+    }
+    if (suggested !== null) {
+      newPrice.value = suggested;
+      priceHint.textContent = `Automatisch berechnet für ${nights} Nächte. Kann angepasst werden.`;
+    } else {
+      priceHint.textContent = 'Kein automatischer Preis möglich für diesen Zeitraum – bitte manuell eintragen.';
+    }
+  }
+  [startDay, startMonth, startYear, endDay, endMonth, endYear].forEach((el) => el.addEventListener('change', suggestPrice));
+
+  addBtn.addEventListener('click', async () => {
+    const start = selectsToDateStr(startDay, startMonth, startYear);
+    const end = selectsToDateStr(endDay, endMonth, endYear);
+    if (!isValidDate(start) || !isValidDate(end)) { showStatus(statusEl, 'Ungültiges Datum.', false); return; }
+    if (start >= end) { showStatus(statusEl, 'Das Anreisedatum muss vor dem Abreisedatum liegen.', false); return; }
+    if (!newName.value.trim()) { showStatus(statusEl, 'Bitte einen Namen angeben.', false); return; }
+
+    const extraCosts = [...newExtraCostsWrap.querySelectorAll('.extra-cost-row')].map((row) => ({
+      label: row.querySelector('.ecLabel').value.trim(),
+      amount: parseFloat(row.querySelector('.ecAmount').value) || 0,
+    })).filter((c) => c.label);
+
+    const payload = {
+      guestName: newName.value.trim(),
+      address: newAddress.value.trim(),
+      email: newEmail.value.trim(),
+      numPeople: parseInt(newPeople.value, 10) || 2,
+      arrival: start,
+      departure: end,
+      message: newNote.value.trim(),
+      extraCosts,
+    };
+    if (newPrice.value !== '') payload.weeklyPrice = parseFloat(newPrice.value);
+
+    addBtn.disabled = true;
+    try {
+      const res = await fetch(API + '/api/stays/manual', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showStatus(statusEl, `Erfasst – Rechnung ${data.invoiceNumber} erstellt.`, true);
+        newName.value = ''; newAddress.value = ''; newEmail.value = ''; newPeople.value = '2';
+        newPrice.value = ''; newNote.value = ''; priceHint.textContent = '';
+        newExtraCostsWrap.innerHTML = '';
+        pickStart = null; pickEnd = null;
+        await Promise.all([loadRanges(), loadStays()]);
+      } else {
+        showStatus(statusEl, data.error || 'Fehler beim Erfassen.', false);
+      }
+    } catch (e) {
+      showStatus(statusEl, 'Verbindungsfehler beim Erfassen.', false);
     } finally {
-      saveBtn.disabled = false;
+      addBtn.disabled = false;
     }
   });
 
@@ -866,42 +947,6 @@
   });
 
   // =====================================================================
-  // EINSTELLUNGEN
-  // =====================================================================
-  const settingsStatus = document.getElementById('settingsStatus');
-
-  async function loadSettings() {
-    const res = await fetch(API + '/api/settings', { headers: authHeaders() });
-    const s = await res.json();
-    document.getElementById('setCompanyName').value = s.companyName || '';
-    document.getElementById('setCompanyAddress').value = s.companyAddress || '';
-    document.getElementById('setAccountHolder').value = s.accountHolder || '';
-    document.getElementById('setIban').value = s.iban || '';
-    document.getElementById('setPaymentTerms').value = s.paymentTermsDays ?? 14;
-    document.getElementById('setInvoicePrefix').value = s.invoicePrefix || '';
-    document.getElementById('setVat').value = s.vatRate ?? 0;
-  }
-
-  document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-    const payload = {
-      companyName: document.getElementById('setCompanyName').value.trim(),
-      companyAddress: document.getElementById('setCompanyAddress').value.trim(),
-      accountHolder: document.getElementById('setAccountHolder').value.trim(),
-      iban: document.getElementById('setIban').value.trim(),
-      paymentTermsDays: parseInt(document.getElementById('setPaymentTerms').value, 10) || 0,
-      invoicePrefix: document.getElementById('setInvoicePrefix').value.trim(),
-      vatRate: parseFloat(document.getElementById('setVat').value) || 0,
-      currency: 'CHF',
-    };
-    const res = await fetch(API + '/api/settings', {
-      method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) showStatus(settingsStatus, 'Einstellungen gespeichert.', true);
-    else showStatus(settingsStatus, 'Fehler beim Speichern.', false);
-  });
-
-  // =====================================================================
   // LOGIN
   // =====================================================================
   async function login() {
@@ -941,7 +986,7 @@
   });
 
   async function bootstrap() {
-    await Promise.all([loadRanges(), loadStays(), loadPricing(), loadSettings()]);
+    await Promise.all([loadRanges(), loadStays(), loadPricing()]);
   }
 
   if (password) {
