@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Backoffice (Test) – Gwunderstübli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#f6f1e7; --cream-2:#efe6d4; --walnut:#3d2b20; --walnut-2:#5a4230;
+    --bark:#2c1f17; --moss:#5b6f4f; --moss-dark:#465a3a; --gold:#b8863f; --gold-light:#e3b968;
+    --text:#3a2f26; --radius:16px; --shadow:0 10px 30px rgba(44,31,23,0.15);
+    --ease: cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Nunito Sans', sans-serif; color:var(--text); background:var(--cream); line-height:1.6;}
+  h1,h2,h3{font-family:'Playfair Display', serif; color:var(--bark); line-height:1.2; margin:0 0 0.4rem;}
+  .brand{font-family:'Poppins', sans-serif; font-weight:600; font-size:1.1rem; padding:1.2rem 1.5rem; border-bottom:1px solid rgba(61,43,32,0.08); display:flex; align-items:center;}
+  .brand span{color:var(--moss);}
+  .testbadge{display:inline-block; background:#c1543f; color:#fff; font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; padding:0.2rem 0.6rem; border-radius:20px; margin-left:0.6rem;}
+  .wrap{max-width:760px; margin:0 auto; padding:3rem 1.5rem;}
+
+  .card{background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:2rem; margin-bottom:1.5rem;}
+  label{display:block; font-weight:700; font-size:0.85rem; margin-bottom:0.4rem; color:var(--walnut-2);}
+  input[type="password"], input[type="text"], input[type="email"], input[type="number"], textarea, select{
+    width:100%; padding:0.75rem 1rem; border-radius:10px; border:1px solid var(--cream-2);
+    background:var(--cream); font-size:1rem; font-family:inherit; color:var(--text);
+  }
+  textarea{resize:vertical; min-height:60px;}
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  .date-fields{display:grid; grid-template-columns:70px 1fr 90px; gap:0.5rem;}
+  select{min-width:0;}
+  .hint{font-size:0.8rem; color:var(--walnut-2); margin-top:0.3rem;}
+  .field{margin-bottom:1.1rem;}
+  .btn{
+    display:inline-block; padding:0.8rem 1.6rem; border-radius:30px; border:none; cursor:pointer;
+    font-weight:800; font-size:0.95rem; font-family:inherit;
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease);
+  }
+  .btn-primary{background:linear-gradient(135deg, var(--gold-light), var(--gold)); color:#2c1f17;}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(184,134,63,0.4);}
+  .btn-secondary{background:var(--cream-2); color:var(--walnut);}
+  .btn-danger{background:#f5e0d6; color:#a34a35; padding:0.4rem 0.8rem; font-size:0.85rem; border-radius:20px;}
+  .btn-ok{background:#eef1e9; color:var(--moss-dark); padding:0.4rem 0.8rem; font-size:0.85rem; border-radius:20px;}
+  .btn:disabled{opacity:0.5; cursor:not-allowed;}
+  .btn-small{padding:0.4rem 0.9rem; font-size:0.82rem; border-radius:20px; border:1px solid var(--cream-2); background:#fff; color:var(--walnut); cursor:pointer; font-weight:700;}
+
+  #loginView .card{margin-top:2rem;}
+  #loginView p.error{color:#a34a35; font-weight:700; margin-top:0.8rem; display:none;}
+
+  #adminView{display:none;}
+  .status{margin-top:1rem; font-weight:700; font-size:0.9rem; display:none;}
+  .status.ok{color:var(--moss-dark);}
+  .status.err{color:#a34a35;}
+
+  .range-list, .item-list{list-style:none; padding:0; margin:1rem 0;}
+  .range-list li, .item-list li{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;
+    padding:0.9rem 0; border-bottom:1px solid var(--cream-2); font-size:0.95rem;
+  }
+  .range-list li:last-child, .item-list li:last-child{border-bottom:none;}
+  .range-info, .item-info{display:flex; flex-direction:column; gap:0.15rem;}
+  .range-name{font-size:0.82rem; color:var(--moss-dark); font-weight:700;}
+  .item-meta{font-size:0.82rem; color:var(--walnut-2);}
+  .item-actions{display:flex; gap:0.5rem; flex-shrink:0; flex-wrap:wrap;}
+
+  .add-row{display:flex; flex-direction:column; gap:1.2rem; margin-top:1.5rem;}
+  .actions-row{display:flex; gap:1rem; margin-top:2rem; align-items:center; flex-wrap:wrap;}
+  .logout{font-size:0.85rem; color:var(--walnut-2); text-decoration:underline; cursor:pointer; background:none; border:none; font-family:inherit; margin-left:auto;}
+
+  .kicker{text-transform:uppercase; letter-spacing:2px; font-size:0.75rem; font-weight:800; color:var(--moss-dark); display:block; margin-bottom:0.6rem;}
+
+  .cal-toggle{background:none; border:1px solid var(--cream-2); color:var(--walnut-2); border-radius:20px; padding:0.5rem 1rem; font-size:0.85rem; font-weight:700; cursor:pointer; font-family:inherit;}
+  .cal-toggle:hover{background:var(--cream-2);}
+  .cal-panel{display:none; margin-top:1rem; border:1px solid var(--cream-2); border-radius:12px; padding:1.2rem;}
+  .cal-panel.open{display:block;}
+  .cal-panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:0.9rem;}
+  .cal-panel-head button{width:32px; height:32px; border-radius:50%; border:1px solid var(--cream-2); background:#fff; cursor:pointer; font-size:1rem;}
+  .cal-panel-head button:hover{background:var(--cream-2);}
+  .cal-panel-label{font-weight:800; font-family:'Playfair Display', serif;}
+  .cal-panel-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:0.3rem;}
+  .cal-panel-grid .dow{font-size:0.68rem; font-weight:800; text-align:center; color:var(--walnut-2); padding-bottom:0.3rem;}
+  .cday{aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:0.82rem; cursor:pointer; user-select:none;}
+  .cday.empty{visibility:hidden; cursor:default;}
+  .cday.free:hover{background:var(--cream-2);}
+  .cday.booked{background:#f5e0d6; color:#a34a35; cursor:not-allowed;}
+  .cday.picked-start, .cday.picked-end{background:var(--gold); color:#fff; font-weight:800;}
+  .cday.in-range{background:#eef1e9; color:var(--moss-dark);}
+  .cal-legend{display:flex; gap:1.2rem; margin-top:0.9rem; font-size:0.78rem; color:var(--walnut-2);}
+  .cal-legend span{display:inline-flex; align-items:center; gap:0.4rem;}
+  .cdot{width:10px; height:10px; border-radius:50%; display:inline-block;}
+  .cdot.booked{background:#c1543f;} .cdot.picked{background:var(--gold);}
+
+  .nav-tabs{display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem;}
+  .nav-tabs button{padding:0.6rem 1.1rem; border-radius:20px; border:1px solid var(--cream-2); background:#fff; cursor:pointer; font-weight:700; font-family:inherit; font-size:0.88rem; color:var(--walnut-2);}
+  .nav-tabs button.active{background:var(--bark); color:#fff; border-color:var(--bark);}
+  .section{display:none;}
+  .section.active{display:block;}
+
+  .price-week-row{display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.5rem 0; border-bottom:1px solid var(--cream-2); font-size:0.9rem;}
+  .price-week-row input{width:100px;}
+  .badge{font-size:0.72rem; font-weight:800; padding:0.2rem 0.6rem; border-radius:20px;}
+  .badge.free{background:#eef1e9; color:var(--moss-dark);}
+  .badge.booked, .badge.requested{background:#f5e0d6; color:#a34a35;}
+  .badge.pending{background:#fde9c8; color:#8a5a12;}
+  .badge.confirmed{background:#eef1e9; color:var(--moss-dark);}
+  .badge.rejected{background:#f5e0d6; color:#a34a35;}
+
+  .approve-form{display:none; margin-top:0.8rem; padding-top:0.8rem; border-top:1px dashed var(--cream-2); width:100%;}
+  .approve-form.open{display:block;}
+  .extra-cost-row{display:grid; grid-template-columns:1fr 100px auto; gap:0.5rem; margin-bottom:0.5rem;}
+</style>
+</head>
+<body>
+
+<div class="brand">Gwunder<span>stübli</span> &amp; Gwunder<span>stube</span> – Backoffice<span class="testbadge">Testumgebung</span></div>
+
+<div class="wrap">
+
+  <div id="loginView">
+    <span class="kicker">Admin-Bereich</span>
+    <h1>Backoffice</h1>
+    <div class="card">
+      <label for="pw">Passwort</label>
+      <input type="password" id="pw" autocomplete="current-password">
+      <p class="error" id="loginError">Falsches Passwort.</p>
+      <div style="margin-top:1.2rem;">
+        <button class="btn btn-primary" id="loginBtn">Einloggen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminView">
+    <span class="kicker">Admin-Bereich · Testumgebung</span>
+    <h1>Backoffice</h1>
+
+    <div class="nav-tabs">
+      <button type="button" class="tab-btn active" data-section="secRanges">Zeiträume</button>
+      <button type="button" class="tab-btn" data-section="secRequests">Anfragen <span id="pendingCount"></span></button>
+      <button type="button" class="tab-btn" data-section="secStays">Aufenthalte</button>
+      <button type="button" class="tab-btn" data-section="secPricing">Preise</button>
+      <button type="button" class="tab-btn" data-section="secSettings">Einstellungen</button>
+    </div>
+
+    <!-- ===================== ZEITRÄUME (unverändert aus dem produktiven Admin) ===================== -->
+    <div class="section active" id="secRanges">
+      <p style="color:var(--walnut-2);">Hier siehst du alle aktuell belegten Zeiträume fürs Gwunderstübli. Namen sind nur hier sichtbar, nie auf der Website.</p>
+      <div class="card">
+        <h3>Aktuelle Zeiträume</h3>
+        <ul class="range-list" id="rangeList"></ul>
+
+        <div class="add-row">
+          <div>
+            <label>Von</label>
+            <div class="date-fields">
+              <select id="startDay"></select>
+              <select id="startMonth"></select>
+              <select id="startYear"></select>
+            </div>
+          </div>
+          <div>
+            <label>Bis</label>
+            <div class="date-fields">
+              <select id="endDay"></select>
+              <select id="endMonth"></select>
+              <select id="endYear"></select>
+            </div>
+          </div>
+          <div>
+            <label for="newName">Name (nur intern sichtbar)</label>
+            <input type="text" id="newName" placeholder="z.B. Familie Muster">
+          </div>
+
+          <div>
+            <button type="button" class="cal-toggle" id="calToggle">📅 Kalender öffnen</button>
+            <div class="cal-panel" id="calPanel">
+              <div class="cal-panel-head">
+                <button type="button" id="cPrev">‹</button>
+                <span class="cal-panel-label" id="cLabel"></span>
+                <button type="button" id="cNext">›</button>
+              </div>
+              <div class="cal-panel-grid" id="cGrid"></div>
+              <div class="cal-legend">
+                <span><span class="cdot booked"></span>Bereits belegt</span>
+                <span><span class="cdot picked"></span>Ausgewählt</span>
+              </div>
+              <p class="hint" id="cHint">Ersten Tag anklicken (Von), dann letzten Tag (Bis).</p>
+            </div>
+          </div>
+
+          <button class="btn btn-secondary" id="addBtn">+ Hinzufügen</button>
+        </div>
+
+        <div class="actions-row">
+          <button class="btn btn-primary" id="saveBtn">Speichern &amp; live schalten</button>
+        </div>
+        <p class="status" id="status"></p>
+      </div>
+    </div>
+
+    <!-- ===================== ANFRAGEN ===================== -->
+    <div class="section" id="secRequests">
+      <p style="color:var(--walnut-2);">Offene Anfragen von Gästen. Beim Annehmen kannst du Preis und Zusatzkosten noch bestätigen oder anpassen.</p>
+      <div class="card">
+        <h3>Offene Anfragen</h3>
+        <ul class="item-list" id="pendingList"></ul>
+        <p class="status" id="requestsStatus"></p>
+      </div>
+      <div class="card">
+        <h3>Bereits entschieden</h3>
+        <ul class="item-list" id="decidedList"></ul>
+      </div>
+    </div>
+
+    <!-- ===================== AUFENTHALTE ===================== -->
+    <div class="section" id="secStays">
+      <p style="color:var(--walnut-2);">Bestätigte Aufenthalte mit Rechnung und Mietvertrag.</p>
+      <div class="card">
+        <h3>Bestätigte Aufenthalte</h3>
+        <ul class="item-list" id="staysList"></ul>
+      </div>
+    </div>
+
+    <!-- ===================== PREISE ===================== -->
+    <div class="section" id="secPricing">
+      <p style="color:var(--walnut-2);">Standardmässig wird wochenweise Samstag–Samstag vermietet. Hier kannst du den Standardpreis sowie einzelne Wochen (z.B. Hochsaison) anpassen.</p>
+      <div class="card">
+        <div class="field">
+          <label for="defaultPrice">Standardpreis pro Woche (CHF)</label>
+          <input type="number" id="defaultPrice" min="0" step="10">
+        </div>
+        <div id="weekPriceList"></div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="savePricingBtn">Preise speichern</button>
+        </div>
+        <p class="status" id="pricingStatus"></p>
+      </div>
+    </div>
+
+    <!-- ===================== EINSTELLUNGEN ===================== -->
+    <div class="section" id="secSettings">
+      <p style="color:var(--walnut-2);">Diese Angaben erscheinen auf Rechnung und Mietvertrag.</p>
+      <div class="card">
+        <div class="field"><label for="setCompanyName">Firmenname</label><input type="text" id="setCompanyName"></div>
+        <div class="field"><label for="setCompanyAddress">Adresse</label><textarea id="setCompanyAddress"></textarea></div>
+        <div class="field"><label for="setAccountHolder">Kontoinhaber</label><input type="text" id="setAccountHolder"></div>
+        <div class="field"><label for="setIban">IBAN</label><input type="text" id="setIban"></div>
+        <div class="field"><label for="setPaymentTerms">Zahlungsfrist (Tage)</label><input type="number" id="setPaymentTerms" min="0"></div>
+        <div class="field"><label for="setInvoicePrefix">Rechnungsnummer-Präfix</label><input type="text" id="setInvoicePrefix" placeholder="z.B. 2026-"></div>
+        <div class="field"><label for="setVat">MWST-Satz (%, 0 = keine)</label><input type="number" id="setVat" min="0" step="0.1"></div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="saveSettingsBtn">Einstellungen speichern</button>
+        </div>
+        <p class="status" id="settingsStatus"></p>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="logout" id="logoutBtn">Abmelden</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = 'https://gwunderstube-bookings-test.tobias-mahrer.workers.dev';
+
+  const loginView = document.getElementById('loginView');
+  const adminView = document.getElementById('adminView');
+  const pwInput = document.getElementById('pw');
+  const loginBtn = document.getElementById('loginBtn');
+  const loginError = document.getElementById('loginError');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  let password = sessionStorage.getItem('gw_admin_pw_test') || '';
+
+  function authHeaders(extra) {
+    return { 'Authorization': 'Bearer ' + password, ...extra };
+  }
+  function showStatus(el, msg, ok) {
+    el.textContent = msg;
+    el.className = 'status ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+  }
+  function formatDateDisplay(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}.${m}.${y}`;
+  }
+
+  // --- Tabs ---
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.section).classList.add('active');
+    });
+  });
+
+  // =====================================================================
+  // ZEITRÄUME (identisch zur produktiven Logik)
+  // =====================================================================
+  const rangeList = document.getElementById('rangeList');
+  const addBtn = document.getElementById('addBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const statusEl = document.getElementById('status');
+  const newName = document.getElementById('newName');
+  const startDay = document.getElementById('startDay');
+  const startMonth = document.getElementById('startMonth');
+  const startYear = document.getElementById('startYear');
+  const endDay = document.getElementById('endDay');
+  const endMonth = document.getElementById('endMonth');
+  const endYear = document.getElementById('endYear');
+
+  function fillDateSelects(daySel, monthSel, yearSel) {
+    daySel.innerHTML = '';
+    for (let d = 1; d <= 31; d++) {
+      const opt = document.createElement('option');
+      opt.value = String(d).padStart(2, '0'); opt.textContent = d;
+      daySel.appendChild(opt);
+    }
+    monthSel.innerHTML = '';
+    MONTHS.forEach((name, i) => {
+      const opt = document.createElement('option');
+      opt.value = String(i + 1).padStart(2, '0'); opt.textContent = name;
+      monthSel.appendChild(opt);
+    });
+    yearSel.innerHTML = '';
+    const thisYear = new Date().getFullYear();
+    for (let y = thisYear; y <= thisYear + 3; y++) {
+      const opt = document.createElement('option');
+      opt.value = String(y); opt.textContent = y;
+      yearSel.appendChild(opt);
+    }
+  }
+  fillDateSelects(startDay, startMonth, startYear);
+  fillDateSelects(endDay, endMonth, endYear);
+
+  function selectsToDateStr(daySel, monthSel, yearSel) {
+    return `${yearSel.value}-${monthSel.value}-${daySel.value}`;
+  }
+  function setSelects(daySel, monthSel, yearSel, dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    yearSel.value = y; monthSel.value = m; daySel.value = d;
+  }
+  function isValidDate(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+  }
+
+  let ranges = [];
+
+  function renderList() {
+    rangeList.innerHTML = '';
+    const sorted = [...ranges].sort((a, b) => a.start.localeCompare(b.start));
+    sorted.forEach((r) => {
+      const li = document.createElement('li');
+      const info = document.createElement('div');
+      info.className = 'range-info';
+      const label = document.createElement('span');
+      label.textContent = `${formatDateDisplay(r.start)} → ${formatDateDisplay(r.end)}`;
+      info.appendChild(label);
+      if (r.name) {
+        const nameEl = document.createElement('span');
+        nameEl.className = 'range-name';
+        nameEl.textContent = '👤 ' + r.name;
+        info.appendChild(nameEl);
+      }
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger';
+      delBtn.textContent = 'Entfernen';
+      delBtn.addEventListener('click', () => {
+        ranges = ranges.filter((x) => x !== r);
+        renderList();
+        renderCal();
+      });
+      li.appendChild(info);
+      li.appendChild(delBtn);
+      rangeList.appendChild(li);
+    });
+    if (sorted.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'Keine belegten Zeiträume.';
+      rangeList.appendChild(li);
+    }
+  }
+
+  async function loadRanges() {
+    const res = await fetch(API + '/api/bookings/full', { headers: authHeaders() });
+    ranges = await res.json();
+    renderList();
+    renderCal();
+  }
+
+  addBtn.addEventListener('click', () => {
+    const start = selectsToDateStr(startDay, startMonth, startYear);
+    const end = selectsToDateStr(endDay, endMonth, endYear);
+    if (!isValidDate(start) || !isValidDate(end)) { showStatus(statusEl, 'Ungültiges Datum.', false); return; }
+    if (start > end) { showStatus(statusEl, 'Das Startdatum muss vor dem Enddatum liegen.', false); return; }
+    ranges.push({ start, end, name: newName.value.trim() });
+    newName.value = '';
+    pickStart = null; pickEnd = null;
+    renderList(); renderCal();
+    statusEl.style.display = 'none';
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    saveBtn.disabled = true;
+    try {
+      const res = await fetch(API + '/api/bookings', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(ranges),
+      });
+      if (res.ok) showStatus(statusEl, 'Gespeichert – die Testseite zeigt die neue Belegung sofort an.', true);
+      else showStatus(statusEl, 'Fehler beim Speichern.', false);
+    } catch (e) {
+      showStatus(statusEl, 'Verbindungsfehler beim Speichern.', false);
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+
+  // Kalender-Picker (Zeiträume)
+  const calToggle = document.getElementById('calToggle');
+  const calPanel = document.getElementById('calPanel');
+  const cPrev = document.getElementById('cPrev');
+  const cNext = document.getElementById('cNext');
+  const cLabel = document.getElementById('cLabel');
+  const cGrid = document.getElementById('cGrid');
+  const cHint = document.getElementById('cHint');
+  const today = new Date();
+  let cYear = today.getFullYear();
+  let cMonth = today.getMonth();
+  let pickStart = null;
+  let pickEnd = null;
+
+  calToggle.addEventListener('click', () => calPanel.classList.toggle('open'));
+  function isBookedDate(dateStr) { return ranges.some(r => dateStr >= r.start && dateStr <= r.end); }
+
+  function renderCal() {
+    cLabel.textContent = MONTHS[cMonth] + ' ' + cYear;
+    cGrid.innerHTML = '';
+    ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(d => {
+      const el = document.createElement('div'); el.className = 'dow'; el.textContent = d; cGrid.appendChild(el);
+    });
+    const firstWeekday = (new Date(cYear, cMonth, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(cYear, cMonth + 1, 0).getDate();
+    for (let i = 0; i < firstWeekday; i++) {
+      const el = document.createElement('div'); el.className = 'cday empty'; cGrid.appendChild(el);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${cYear}-${String(cMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const el = document.createElement('div');
+      el.textContent = d;
+      const booked = isBookedDate(dateStr);
+      let cls = 'cday ' + (booked ? 'booked' : 'free');
+      if (pickStart && dateStr === pickStart) cls += ' picked-start';
+      if (pickEnd && dateStr === pickEnd) cls += ' picked-end';
+      if (pickStart && pickEnd && dateStr > pickStart && dateStr < pickEnd) cls += ' in-range';
+      el.className = cls;
+      if (!booked) el.addEventListener('click', () => onDayClick(dateStr));
+      cGrid.appendChild(el);
+    }
+  }
+  function onDayClick(dateStr) {
+    if (!pickStart || (pickStart && pickEnd)) {
+      pickStart = dateStr; pickEnd = null;
+      cHint.textContent = 'Jetzt letzten Tag anklicken (Bis).';
+    } else if (dateStr < pickStart) {
+      pickStart = dateStr;
+      cHint.textContent = 'Jetzt letzten Tag anklicken (Bis).';
+    } else {
+      pickEnd = dateStr;
+      setSelects(startDay, startMonth, startYear, pickStart);
+      setSelects(endDay, endMonth, endYear, pickEnd);
+      cHint.textContent = `Ausgewählt: ${formatDateDisplay(pickStart)} – ${formatDateDisplay(pickEnd)}. Unten „+ Hinzufügen" klicken.`;
+    }
+    renderCal();
+  }
+  cPrev.addEventListener('click', () => { cMonth--; if (cMonth < 0) { cMonth = 11; cYear--; } renderCal(); });
+  cNext.addEventListener('click', () => { cMonth++; if (cMonth > 11) { cMonth = 0; cYear++; } renderCal(); });
+
+  // =====================================================================
+  // ANFRAGEN & AUFENTHALTE
+  // =====================================================================
+  const pendingList = document.getElementById('pendingList');
+  const decidedList = document.getElementById('decidedList');
+  const staysList = document.getElementById('staysList');
+  const requestsStatus = document.getElementById('requestsStatus');
+  let stays = [];
+
+  async function loadStays() {
+    const res = await fetch(API + '/api/stays/full', { headers: authHeaders() });
+    stays = await res.json();
+    renderStays();
+  }
+
+  async function openPdf(id, kind) {
+    // Open the tab synchronously (still inside the click gesture) so browsers
+    // don't treat it as a blocked popup once we fill it in after the fetch.
+    const tab = window.open('', '_blank');
+    try {
+      const res = await fetch(`${API}/api/stays/${id}/${kind}.pdf`, { headers: authHeaders() });
+      if (!res.ok) { if (tab) tab.close(); alert('PDF konnte nicht geladen werden.'); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      if (tab) tab.location.href = url;
+      else window.open(url, '_blank');
+    } catch (e) {
+      if (tab) tab.close();
+      alert('Verbindungsfehler beim Laden des PDFs.');
+    }
+  }
+
+  function renderStays() {
+    const pending = stays.filter(s => s.status === 'pending').sort((a,b) => a.createdAt.localeCompare(b.createdAt));
+    const decided = stays.filter(s => s.status !== 'pending' && s.status !== 'confirmed').sort((a,b) => (b.decidedAt||'').localeCompare(a.decidedAt||''));
+    const confirmed = stays.filter(s => s.status === 'confirmed').sort((a,b) => a.arrival.localeCompare(b.arrival));
+
+    document.getElementById('pendingCount').textContent = pending.length ? `(${pending.length})` : '';
+
+    pendingList.innerHTML = '';
+    pending.forEach((s) => {
+      const li = document.createElement('li');
+      const info = document.createElement('div');
+      info.className = 'item-info';
+      info.innerHTML = `
+        <strong>${s.guestName}</strong>
+        <span class="item-meta">${formatDateDisplay(s.arrival)} – ${formatDateDisplay(s.departure)} · ${s.numPeople} Pers. ${s.isCustomRequest ? '· <span class="badge requested">Sonderanfrage</span>' : ''}</span>
+        <span class="item-meta">${s.email} · ${s.address}</span>
+        ${s.message ? `<span class="item-meta">„${s.message}"</span>` : ''}
+        <span class="item-meta">${s.total !== null ? `Berechneter Preis: CHF ${s.total}.–` : 'Preis noch offen'}</span>
+      `;
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+      const approveBtn = document.createElement('button');
+      approveBtn.className = 'btn-ok'; approveBtn.textContent = 'Annehmen';
+      const rejectBtn = document.createElement('button');
+      rejectBtn.className = 'btn-danger'; rejectBtn.textContent = 'Ablehnen';
+
+      const form = document.createElement('div');
+      form.className = 'approve-form';
+      form.innerHTML = `
+        <div class="field">
+          <label>Preis Aufenthalt (CHF)</label>
+          <input type="number" class="approvePrice" value="${s.total ?? ''}" min="0" step="10">
+        </div>
+        <div class="extraCostsWrap"></div>
+        <button type="button" class="btn-small addExtraCost">+ Zusatzkosten</button>
+        <div style="margin-top:0.8rem;">
+          <button type="button" class="btn btn-primary confirmApprove">Bestätigen &amp; Rechnung erstellen</button>
+        </div>
+      `;
+      const extraWrap = form.querySelector('.extraCostsWrap');
+      function addExtraRow(label = '', amount = '') {
+        const row = document.createElement('div');
+        row.className = 'extra-cost-row';
+        row.innerHTML = `<input type="text" placeholder="Bezeichnung" class="ecLabel" value="${label}">
+          <input type="number" placeholder="CHF" class="ecAmount" value="${amount}">
+          <button type="button" class="btn-small ecRemove">×</button>`;
+        row.querySelector('.ecRemove').addEventListener('click', () => row.remove());
+        extraWrap.appendChild(row);
+      }
+      form.querySelector('.addExtraCost').addEventListener('click', () => addExtraRow());
+
+      approveBtn.addEventListener('click', () => form.classList.toggle('open'));
+      rejectBtn.addEventListener('click', async () => {
+        if (!confirm('Diese Anfrage wirklich ablehnen?')) return;
+        await fetch(`${API}/api/stays/${s.id}/decision`, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ action: 'reject' }),
+        });
+        showStatus(requestsStatus, 'Anfrage abgelehnt.', true);
+        await loadStays();
+      });
+      form.querySelector('.confirmApprove').addEventListener('click', async () => {
+        const weeklyPrice = parseFloat(form.querySelector('.approvePrice').value);
+        if (isNaN(weeklyPrice) || weeklyPrice < 0) { showStatus(requestsStatus, 'Bitte einen gültigen Preis angeben.', false); return; }
+        const extraCosts = [...extraWrap.querySelectorAll('.extra-cost-row')].map(row => ({
+          label: row.querySelector('.ecLabel').value.trim(),
+          amount: parseFloat(row.querySelector('.ecAmount').value) || 0,
+        })).filter(c => c.label);
+        const res = await fetch(`${API}/api/stays/${s.id}/decision`, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ action: 'approve', weeklyPrice, extraCosts }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showStatus(requestsStatus, `Angenommen – Rechnung ${data.invoiceNumber} erstellt.`, true);
+          await loadStays();
+        } else {
+          showStatus(requestsStatus, data.error || 'Fehler beim Bestätigen.', false);
+        }
+      });
+
+      actions.appendChild(approveBtn);
+      actions.appendChild(rejectBtn);
+      li.appendChild(info);
+      li.appendChild(actions);
+      li.appendChild(form);
+      pendingList.appendChild(li);
+    });
+    if (pending.length === 0) pendingList.innerHTML = '<li>Keine offenen Anfragen.</li>';
+
+    decidedList.innerHTML = '';
+    decided.forEach((s) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<div class="item-info"><strong>${s.guestName}</strong>
+        <span class="item-meta">${formatDateDisplay(s.arrival)} – ${formatDateDisplay(s.departure)}</span></div>
+        <span class="badge ${s.status}">${s.status === 'rejected' ? 'Abgelehnt' : s.status}</span>`;
+      decidedList.appendChild(li);
+    });
+    if (decided.length === 0) decidedList.innerHTML = '<li>Noch keine abgelehnten Anfragen.</li>';
+
+    staysList.innerHTML = '';
+    confirmed.forEach((s) => {
+      const li = document.createElement('li');
+      const info = document.createElement('div');
+      info.className = 'item-info';
+      info.innerHTML = `<strong>${s.guestName}</strong>
+        <span class="item-meta">${formatDateDisplay(s.arrival)} – ${formatDateDisplay(s.departure)} · ${s.numPeople} Pers.</span>
+        <span class="item-meta">Rechnung ${s.invoiceNumber} · Total CHF ${s.total}.–</span>`;
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+      const invBtn = document.createElement('button');
+      invBtn.className = 'btn-small'; invBtn.textContent = '📄 Rechnung';
+      invBtn.addEventListener('click', () => openPdf(s.id, 'invoice'));
+      const contractBtn = document.createElement('button');
+      contractBtn.className = 'btn-small'; contractBtn.textContent = '📄 Vertrag';
+      contractBtn.addEventListener('click', () => openPdf(s.id, 'contract'));
+      actions.appendChild(invBtn);
+      actions.appendChild(contractBtn);
+      li.appendChild(info);
+      li.appendChild(actions);
+      staysList.appendChild(li);
+    });
+    if (confirmed.length === 0) staysList.innerHTML = '<li>Noch keine bestätigten Aufenthalte.</li>';
+  }
+
+  // =====================================================================
+  // PREISE
+  // =====================================================================
+  const defaultPriceInput = document.getElementById('defaultPrice');
+  const weekPriceList = document.getElementById('weekPriceList');
+  const pricingStatus = document.getElementById('pricingStatus');
+  let weekPricing = { defaultPrice: 700, overrides: {} };
+  let upcomingWeeks = [];
+
+  async function loadPricing() {
+    const [pRes, wRes] = await Promise.all([
+      fetch(API + '/api/weekpricing', { headers: authHeaders() }),
+      fetch(API + '/api/weeks?weeks=26'),
+    ]);
+    weekPricing = await pRes.json();
+    upcomingWeeks = await wRes.json();
+    defaultPriceInput.value = weekPricing.defaultPrice;
+    renderWeekPricing();
+  }
+
+  function renderWeekPricing() {
+    weekPriceList.innerHTML = '';
+    upcomingWeeks.forEach((w) => {
+      const row = document.createElement('div');
+      row.className = 'price-week-row';
+      const override = weekPricing.overrides[w.start];
+      row.innerHTML = `<span>${formatDateDisplay(w.start)} – ${formatDateDisplay(w.end)} <span class="badge ${w.status}">${w.status === 'free' ? 'Frei' : (w.status === 'requested' ? 'Angefragt' : 'Belegt')}</span></span>
+        <input type="number" min="0" step="10" placeholder="${weekPricing.defaultPrice}" value="${override !== undefined ? override : ''}" data-week="${w.start}">`;
+      weekPriceList.appendChild(row);
+    });
+  }
+
+  document.getElementById('savePricingBtn').addEventListener('click', async () => {
+    const defaultPrice = parseFloat(defaultPriceInput.value);
+    if (isNaN(defaultPrice) || defaultPrice < 0) { showStatus(pricingStatus, 'Bitte einen gültigen Standardpreis angeben.', false); return; }
+    const overrides = {};
+    weekPriceList.querySelectorAll('input[data-week]').forEach((input) => {
+      if (input.value !== '') overrides[input.dataset.week] = parseFloat(input.value);
+    });
+    const res = await fetch(API + '/api/weekpricing', {
+      method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ defaultPrice, overrides }),
+    });
+    if (res.ok) { showStatus(pricingStatus, 'Preise gespeichert.', true); await loadPricing(); }
+    else showStatus(pricingStatus, 'Fehler beim Speichern.', false);
+  });
+
+  // =====================================================================
+  // EINSTELLUNGEN
+  // =====================================================================
+  const settingsStatus = document.getElementById('settingsStatus');
+
+  async function loadSettings() {
+    const res = await fetch(API + '/api/settings', { headers: authHeaders() });
+    const s = await res.json();
+    document.getElementById('setCompanyName').value = s.companyName || '';
+    document.getElementById('setCompanyAddress').value = s.companyAddress || '';
+    document.getElementById('setAccountHolder').value = s.accountHolder || '';
+    document.getElementById('setIban').value = s.iban || '';
+    document.getElementById('setPaymentTerms').value = s.paymentTermsDays ?? 14;
+    document.getElementById('setInvoicePrefix').value = s.invoicePrefix || '';
+    document.getElementById('setVat').value = s.vatRate ?? 0;
+  }
+
+  document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+    const payload = {
+      companyName: document.getElementById('setCompanyName').value.trim(),
+      companyAddress: document.getElementById('setCompanyAddress').value.trim(),
+      accountHolder: document.getElementById('setAccountHolder').value.trim(),
+      iban: document.getElementById('setIban').value.trim(),
+      paymentTermsDays: parseInt(document.getElementById('setPaymentTerms').value, 10) || 0,
+      invoicePrefix: document.getElementById('setInvoicePrefix').value.trim(),
+      vatRate: parseFloat(document.getElementById('setVat').value) || 0,
+      currency: 'CHF',
+    };
+    const res = await fetch(API + '/api/settings', {
+      method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) showStatus(settingsStatus, 'Einstellungen gespeichert.', true);
+    else showStatus(settingsStatus, 'Fehler beim Speichern.', false);
+  });
+
+  // =====================================================================
+  // LOGIN
+  // =====================================================================
+  async function login() {
+    loginError.style.display = 'none';
+    loginBtn.disabled = true;
+    try {
+      const res = await fetch(API + '/api/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwInput.value }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        password = pwInput.value;
+        sessionStorage.setItem('gw_admin_pw_test', password);
+        loginView.style.display = 'none';
+        adminView.style.display = 'block';
+        await bootstrap();
+      } else {
+        loginError.style.display = 'block';
+      }
+    } catch (e) {
+      loginError.textContent = 'Verbindungsfehler, bitte später erneut versuchen.';
+      loginError.style.display = 'block';
+    } finally {
+      loginBtn.disabled = false;
+    }
+  }
+  loginBtn.addEventListener('click', login);
+  pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+
+  logoutBtn.addEventListener('click', () => {
+    sessionStorage.removeItem('gw_admin_pw_test');
+    password = '';
+    adminView.style.display = 'none';
+    loginView.style.display = 'block';
+    pwInput.value = '';
+  });
+
+  async function bootstrap() {
+    await Promise.all([loadRanges(), loadStays(), loadPricing(), loadSettings()]);
+  }
+
+  if (password) {
+    loginView.style.display = 'none';
+    adminView.style.display = 'block';
+    bootstrap();
+  }
+</script>
+
+</body>
+</html>

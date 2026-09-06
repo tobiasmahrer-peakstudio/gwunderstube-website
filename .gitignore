@@ -2,3 +2,6 @@
 admin-worker/node_modules/
 admin-worker/seed.json
 admin-worker/.wrangler/
+test/admin-worker-test/node_modules/
+test/admin-worker-test/seed-ranges.json
+test/admin-worker-test/.wrangler/
