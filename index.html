@@ -300,6 +300,29 @@
     text-align:center; padding:2.2rem 1.5rem; background:var(--bark);
     color:#a8977e; font-size:0.85rem; border-top:1px solid rgba(255,255,255,0.08);
   }
+  .peak-badge{
+    text-align: center;
+    padding: 14px 0 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  .peak-badge a{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    opacity: 0.55;
+    transition: opacity 0.2s ease;
+  }
+  .peak-badge a:hover{ opacity: 1; }
+  .peak-badge--dark a{ color: #ffffff; }
+  .peak-badge__logo{
+    height: 14px;
+    width: auto;
+    display: inline-block;
+    vertical-align: middle;
+  }
 
   @media (max-width:820px){
     .cards, .feature-grid, .contact-grid{grid-template-columns:1fr;}
@@ -500,6 +523,13 @@
 
 <footer>
   © <span id="year"></span> Gwunderstübli &amp; Gwunderstube · Lenk im Simmental
+  <div class="peak-badge peak-badge--dark">
+    <a href="https://peak-studio.ch" target="_blank" rel="noopener">
+      Website by
+      <img src="data:image/png;base64,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"
+           alt="peak studio" class="peak-badge__logo">
+    </a>
+  </div>
 </footer>
 
 <script>
