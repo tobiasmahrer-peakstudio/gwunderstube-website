@@ -109,12 +109,15 @@
   .cday.empty{visibility:hidden; cursor:default;}
   .cday.free:hover{background:var(--cream-2);}
   .cday.booked{background:#f5e0d6; color:#a34a35; cursor:not-allowed;}
+  .cday.arr{background:linear-gradient(135deg,#fff 50%,#f5e0d6 50%); color:var(--walnut-2);}
+  .cday.dep{background:linear-gradient(135deg,#f5e0d6 50%,#fff 50%); color:var(--walnut-2);}
+  .cday.noclick{cursor:not-allowed;}
   .cday.picked-start, .cday.picked-end{background:var(--gold); color:#fff; font-weight:800;}
   .cday.in-range{background:#eef1e9; color:var(--moss-dark);}
-  .cal-legend{display:flex; gap:1.2rem; margin-top:0.9rem; font-size:0.78rem; color:var(--walnut-2);}
+  .cal-legend{display:flex; flex-wrap:wrap; gap:0.4rem 1.2rem; margin-top:0.9rem; font-size:0.78rem; color:var(--walnut-2);}
   .cal-legend span{display:inline-flex; align-items:center; gap:0.4rem;}
   .cdot{width:10px; height:10px; border-radius:50%; display:inline-block;}
-  .cdot.booked{background:#c1543f;} .cdot.picked{background:var(--gold);}
+  .cdot.booked{background:#c1543f;} .cdot.half{background:linear-gradient(135deg,#c1543f 50%,#fff 50%); box-shadow:inset 0 0 0 1px #c1543f;} .cdot.picked{background:var(--gold);}
 
   .nav-tabs{display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem;}
   .nav-tabs button{padding:0.6rem 1.1rem; border-radius:20px; border:1px solid var(--cream-2); background:#fff; cursor:pointer; font-weight:700; font-family:inherit; font-size:0.88rem; color:var(--walnut-2);}
@@ -195,6 +198,7 @@
                 <div class="cal-panel-grid" id="cGrid"></div>
                 <div class="cal-legend">
                   <span><span class="cdot booked"></span>Bereits belegt</span>
+                  <span><span class="cdot half"></span>Wechseltag</span>
                   <span><span class="cdot picked"></span>Ausgewählt</span>
                 </div>
                 <p class="hint" id="cHint">Ersten Tag anklicken (Anreise), dann den Abreisetag (Checkout) anklicken – für eine ganze Woche z.B. der nächste Samstag.</p>
@@ -622,7 +626,21 @@
   let pickStart = null;
   let pickEnd = null;
 
-  function isBookedDate(dateStr) { return ranges.some(r => dateStr >= r.start && dateStr <= r.end); }
+  function addDaysStr(d, n) { const t = new Date(d + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
+  function nightBooked(d) { return ranges.some((r) => d >= r.start && d <= r.end); }
+  // Wechseltag: ein Samstag kann Abreise (vormittags) des einen und Anreise (nachmittags) des nächsten Gastes sein.
+  // 'arr' = ab hier belegt (halb rot, nur als Abreise wählbar), 'dep' = bis hier belegt (halb rot, als Anreise wählbar).
+  function dayState(d) {
+    const after = nightBooked(d), before = nightBooked(addDaysStr(d, -1));
+    return before && after ? 'full' : after ? 'arr' : before ? 'dep' : 'free';
+  }
+  function rangeFree(a, b) { for (let x = a; x < b; x = addDaysStr(x, 1)) if (nightBooked(x)) return false; return true; }
+  function canPick(d) {
+    const st = dayState(d);
+    if (st === 'full') return false;
+    if (pickStart && !pickEnd && d > pickStart && rangeFree(pickStart, d)) return true; // Abreise
+    return st === 'free' || st === 'dep'; // Anreise: die Nacht ab diesem Tag muss frei sein
+  }
 
   function renderCal() {
     cLabel.textContent = MONTHS[cMonth] + ' ' + cYear;
@@ -639,26 +657,25 @@
       const dateStr = `${cYear}-${String(cMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const el = document.createElement('div');
       el.textContent = d;
-      const booked = isBookedDate(dateStr);
-      let cls = 'cday ' + (booked ? 'booked' : 'free');
+      const st = dayState(dateStr);
+      const booked = st === 'full';
+      const pickable = canPick(dateStr);
+      let cls = 'cday ' + (booked ? 'booked' : st) + (!booked && !pickable ? ' noclick' : '');
       if (pickStart && dateStr === pickStart) cls += ' picked-start';
       if (pickEnd && dateStr === pickEnd) cls += ' picked-end';
       if (pickStart && pickEnd && dateStr > pickStart && dateStr < pickEnd) cls += ' in-range';
       el.className = cls;
-      if (!booked) el.addEventListener('click', () => onDayClick(dateStr));
+      if (pickable) el.addEventListener('click', () => onDayClick(dateStr));
       cGrid.appendChild(el);
     }
   }
   function onDayClick(dateStr) {
-    if (!pickStart || (pickStart && pickEnd)) {
-      pickStart = dateStr; pickEnd = null;
-      cHint.textContent = 'Jetzt den Abreisetag anklicken (Checkout).';
-    } else if (dateStr < pickStart) {
-      pickStart = dateStr;
-      cHint.textContent = 'Jetzt den Abreisetag anklicken (Checkout).';
-    } else {
+    if (pickStart && !pickEnd && dateStr > pickStart && rangeFree(pickStart, dateStr)) {
       pickEnd = dateStr;
       cHint.textContent = `Ausgewählt: ${formatDateDisplay(pickStart)} – ${formatDateDisplay(pickEnd)}.`;
+    } else {
+      pickStart = dateStr; pickEnd = null;
+      cHint.textContent = 'Jetzt den Abreisetag anklicken (Checkout).';
     }
     suggestPrice();
     renderCal();

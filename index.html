@@ -287,12 +287,15 @@
   .cal-day.empty{visibility:hidden;}
   .cal-day.free{background:#eef1e9; color:var(--moss-dark);}
   .cal-day.booked{background:#f5e0d6; color:#a34a35;}
+  .cal-day.arr{background:linear-gradient(135deg,#eef1e9 50%,#f5e0d6 50%); color:var(--walnut-2);}
+  .cal-day.dep{background:linear-gradient(135deg,#f5e0d6 50%,#eef1e9 50%); color:var(--walnut-2);}
   .cal-day.today{box-shadow:inset 0 0 0 2px var(--gold);}
-  .cal-legend{display:flex; gap:1.6rem; margin-top:1.3rem; font-size:0.85rem; color:var(--walnut-2);}
+  .cal-legend{display:flex; flex-wrap:wrap; gap:0.6rem 1.6rem; margin-top:1.3rem; font-size:0.85rem; color:var(--walnut-2);}
   .cal-legend span{display:inline-flex; align-items:center; gap:0.5rem;}
   .cal-dot{width:11px; height:11px; border-radius:50%; display:inline-block;}
   .cal-dot.free{background:#7c9a6c;}
   .cal-dot.booked{background:#c1543f;}
+  .cal-dot.half{background:linear-gradient(135deg,#c1543f 50%,#7c9a6c 50%);}
   .availability-note{margin-top:1.2rem; font-size:0.92rem; color:var(--walnut-2);}
   .availability-note a{color:var(--gold); font-weight:800; border-bottom:1px solid var(--gold);}
   @media (max-width:480px){
@@ -515,6 +518,7 @@
       <div class="cal-legend">
         <span><span class="cal-dot free"></span>Frei</span>
         <span><span class="cal-dot booked"></span>Belegt</span>
+        <span><span class="cal-dot half"></span>Wechseltag (Anreise/Abreise)</span>
       </div>
       <p class="availability-note">Diese Übersicht zeigt den aktuellen Buchungsstand. Für eine verbindliche Reservation einfach <a href="anfrage/">Aufenthalt anfragen</a>.</p>
     </div>
@@ -645,9 +649,15 @@
     { start: '2027-07-01', end: '2027-07-02' },
   ];
 
-  function isBooked(dateStr) {
-    return bookedRanges.some(r => dateStr >= r.start && dateStr <= r.end);
+  function addDaysStr(d, n) { const t = new Date(d + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
+  function nightBooked(d) { return bookedRanges.some((r) => d >= r.start && d <= r.end); }
+  // Wechseltag: ein Samstag kann Abreise (vormittags) des einen und Anreise (nachmittags) des nächsten Gastes sein.
+  // 'arr' = ab hier belegt (halb rot, nur als Abreise wählbar), 'dep' = bis hier belegt (halb rot, als Anreise wählbar).
+  function dayState(d) {
+    const after = nightBooked(d), before = nightBooked(addDaysStr(d, -1));
+    return before && after ? 'full' : after ? 'arr' : before ? 'dep' : 'free';
   }
+  function rangeFree(a, b) { for (let x = a; x < b; x = addDaysStr(x, 1)) if (nightBooked(x)) return false; return true; }
 
   const today = new Date();
   let calYear = today.getFullYear();
@@ -682,8 +692,10 @@
       const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const el = document.createElement('div');
       el.textContent = d;
-      const booked = isBooked(dateStr);
-      el.className = 'cal-day ' + (booked ? 'booked' : 'free') + (dateStr === todayStr ? ' today' : '');
+      const st = dayState(dateStr);
+      el.className = 'cal-day ' + (st === 'full' ? 'booked' : st) + (dateStr === todayStr ? ' today' : '');
+      if (st === 'arr') el.title = 'Wechseltag: ab Nachmittag belegt';
+      if (st === 'dep') el.title = 'Wechseltag: bis Vormittag belegt';
       grid.appendChild(el);
     }
   }
